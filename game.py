@@ -81,7 +81,7 @@ class Game:
             self.map_center = (self.map_center[0], self.map_center[1] - self.scroll_speed)
         if self.move_flags['down']:
             self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
-        self.map_layer.center(self.map_center)
+        self.map_group.center(self.map_center)
         self.map_group.draw(self.screen)
         pygame.display.flip()
 
