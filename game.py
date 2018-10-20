@@ -18,14 +18,13 @@ class Game:
         self.tmx_data = load_pygame('map/test1.tmx')
         self.map_data = pyscroll.data.TiledMapData(self.tmx_data)
         self.clock = pygame.time.Clock()
-        self.map_layer = pyscroll.orthographic.BufferedRenderer(self.map_data, self.screen.get_size())
-        # self.map_layer = pyscroll.BufferedRenderer(self.scroll_map_data,
-        #                                            (screen_size[0] / 2, screen_size[1] / 2),
-        #                                            clamp_camera=True)
+        self.map_layer = pyscroll.BufferedRenderer(self.map_data, self.screen.get_size(), alpha=True)
         # self.map_group = pyscroll.PyscrollGroup(map_layer=self.map_layer)
         map_center = (self.map_layer.map_rect.width / 2,
                       self.map_layer.map_rect.height / 2)
         self.map_layer.center(map_center)
+        self.map_layer.zoom = 0.350
+        self.test_rect = pygame.Rect(0, 0, 200, 200)
 
     def update(self):
         """Update the screen and any objects that require individual updates"""
