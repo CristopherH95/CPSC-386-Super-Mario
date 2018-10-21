@@ -208,7 +208,7 @@
   </object>
  </objectgroup>
  <objectgroup id="105" name="walls">
-  <object id="27" name="floor1" x="2" y="736" width="2749" height="32"/>
+  <object id="27" name="floor1" x="2" y="711" width="2749" height="32"/>
   <object id="28" name="pit1" x="2719" y="768" width="32" height="190"/>
   <object id="29" name="pit2" x="2817" y="768" width="30" height="191"/>
   <object id="30" name="floor2" x="2817" y="736" width="1021" height="32"/>
