@@ -13,8 +13,13 @@ class TestSprite(pygame.sprite.Sprite):
         self.image.fill((255, 255, 255))
         self.rect = pygame.Rect(map_center[0], map_center[1], spawn.width, spawn.height)
 
-    def update(self, floor):
-        if self.rect.bottom < floor.top:
+    def update(self, walls):
+        touched_wall = False
+        for wall in walls:
+            if self.rect.colliderect(wall):
+                touched_wall = True
+                break
+        if not touched_wall:
             self.rect.bottom += 1   # test the sprite dropping to the floor
 
 
@@ -34,8 +39,10 @@ class Game:
         self.map_layer = pyscroll.BufferedRenderer(self.map_data, self.screen.get_size(), alpha=True)  # map renderer
         self.map_group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=5)  # Sprite group for map
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
-        floor_data = self.tmx_data.get_object_by_name('floor1')
-        self.floor_1 = pygame.Rect(floor_data.x, floor_data.y, floor_data.width, floor_data.height)
+        floor_data = self.tmx_data.get_layer_by_name('walls')
+        self.walls = []
+        for obj in floor_data:  # walls represented as pygame Rects
+            self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
         self.test = TestSprite(self.map_center, self.player_spawn)   # test sprite for player location
         self.map_layer.center(self.map_center)   # center camera
@@ -88,9 +95,7 @@ class Game:
         if self.move_flags['down']:
             self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
         self.map_group.center(self.map_center)
-        self.test.update(self.floor_1)  # update and check if not touching floor 1
-        print('test: ', self.test.rect.bottom)
-        print('floor: ', self.floor_1.top)
+        self.test.update(self.walls)  # update and check if not touching any walls
         self.map_group.draw(self.screen)
         pygame.display.flip()
 
