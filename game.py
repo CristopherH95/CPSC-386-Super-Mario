@@ -7,11 +7,16 @@ import pyscroll
 
 # test sprite
 class TestSprite(pygame.sprite.Sprite):
-    def __init__(self, map_center, spawn):
+    def __init__(self, map_center, spawn, image=None):
         super(TestSprite, self).__init__()
-        self.image = pygame.Surface((25, 25))
-        self.image.fill((255, 255, 255))
-        self.rect = pygame.Rect(map_center[0], map_center[1], spawn.width, spawn.height)
+        if not image:
+            self.image = pygame.Surface((25, 25))
+            self.image.fill((255, 255, 255))
+            self.rect = pygame.Rect(map_center[0], map_center[1], spawn.width, spawn.height)
+        else:
+            self.image = image
+            self.rect = self.image.get_rect()
+            self.rect.left, self.rect.top = map_center[0], map_center[1]
 
     def update(self, walls):
         touched_wall = False
@@ -40,11 +45,15 @@ class Game:
         self.map_group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=5)  # Sprite group for map
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         floor_data = self.tmx_data.get_layer_by_name('walls')
+        block_data = self.tmx_data.get_layer_by_name('blocks')
+        test_img = None
+        for block in block_data:
+            test_img = block.image
         self.walls = []
         for obj in floor_data:  # walls represented as pygame Rects
             self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
-        self.test = TestSprite(self.map_center, self.player_spawn)   # test sprite for player location
+        self.test = TestSprite(self.map_center, self.player_spawn, image=test_img)   # test sprite for player location
         self.map_layer.center(self.map_center)   # center camera
         self.map_layer.zoom = 0.725     # camera zoom
         self.map_group.add(self.test)   # add test sprite to map group
