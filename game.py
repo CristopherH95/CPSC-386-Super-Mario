@@ -1,6 +1,8 @@
 from configparser import ConfigParser
 from event_loop import EventLoop
 from pytmx.util_pygame import load_pygame
+from block import Block
+from pipe import Pipe
 import pygame
 import pyscroll
 
@@ -38,7 +40,7 @@ class Game:
                        int(config['screen_settings']['height']))
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption(config['game_settings']['title'])
-        self.tmx_data = load_pygame('map/test1.tmx')    # load map data
+        self.tmx_data = load_pygame('map/world1.tmx')    # load map data
         self.map_data = pyscroll.data.TiledMapData(self.tmx_data)   # get PyScroll map data
         self.clock = pygame.time.Clock()    # clock for limiting fps
         self.map_layer = pyscroll.BufferedRenderer(self.map_data, self.screen.get_size(), alpha=True)  # map renderer
@@ -46,14 +48,22 @@ class Game:
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         floor_data = self.tmx_data.get_layer_by_name('walls')
         block_data = self.tmx_data.get_layer_by_name('blocks')
-        test_img = None
+        pipe_data = self.tmx_data.get_layer_by_name('pipes')
+        self.pipes = pygame.sprite.Group()
+        self.blocks = pygame.sprite.Group()
         for block in block_data:
-            test_img = block.image
+            b_sprite = Block(block.x, block.y, block.image, self.screen)
+            self.map_group.add(b_sprite)    # draw using this group
+            self.blocks.add(b_sprite)       # check collisions using this group
+        for pipe in pipe_data:
+            p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
+            self.map_group.add(p_sprite)    # draw using this group
+            self.pipes.add(p_sprite)        # check collisions using this group
         self.walls = []
         for obj in floor_data:  # walls represented as pygame Rects
             self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
-        self.test = TestSprite(self.map_center, self.player_spawn, image=test_img)   # test sprite for player location
+        self.test = TestSprite(self.map_center, self.player_spawn)   # test sprite for player location
         self.map_layer.center(self.map_center)   # center camera
         self.map_layer.zoom = 0.725     # camera zoom
         self.map_group.add(self.test)   # add test sprite to map group
