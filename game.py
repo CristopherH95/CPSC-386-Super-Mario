@@ -72,12 +72,14 @@ class Game:
             'blocks': pygame.sprite.Group(),
             'q_blocks': pygame.sprite.Group(),
             'pipes': pygame.sprite.Group(),
-            'flag': pygame.sprite.Group()
+            'flag': pygame.sprite.Group(),
+            'win-zone': []
         }
         floor_data = self.tmx_data.get_layer_by_name('walls')
         block_data = self.tmx_data.get_layer_by_name('blocks')
         q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
         pipe_data = self.tmx_data.get_layer_by_name('pipes')
+        flag_data = self.tmx_data.get_layer_by_name('flag')
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         for block in block_data:
@@ -92,6 +94,14 @@ class Game:
             p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
             self.map_group.add(p_sprite)    # draw using this group
             self.game_objects['pipes'].add(p_sprite)        # check collisions using this group
+        for flag_part in flag_data:
+            if flag_part.image:
+                f_sprite = Block(flag_part.x, flag_part.y, flag_part.image, self.screen)
+                self.map_group.add(f_sprite)    # draw using this group
+                self.game_objects['flag'].add(f_sprite)        # check collisions using this group
+            else:
+                self.game_objects['win-zone'].append(pygame.Rect(flag_part.x, flag_part.y,
+                                                                 flag_part.width, flag_part.height))
 
     def set_cam_move(self, event):
         """Set camera movement based on key pressed"""
