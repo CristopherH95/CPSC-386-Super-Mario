@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 from event_loop import EventLoop
 from pytmx.util_pygame import load_pygame
-from block import Block
+from block import Block, QuestionBlock
 from pipe import Pipe
 import pygame
 import pyscroll
@@ -48,13 +48,19 @@ class Game:
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         floor_data = self.tmx_data.get_layer_by_name('walls')
         block_data = self.tmx_data.get_layer_by_name('blocks')
+        q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
         pipe_data = self.tmx_data.get_layer_by_name('pipes')
-        self.pipes = pygame.sprite.Group()
+        self.pipes = pygame.sprite.Group()  # sprite groups for objects in map
         self.blocks = pygame.sprite.Group()
+        self.q_blocks = pygame.sprite.Group()
         for block in block_data:
             b_sprite = Block(block.x, block.y, block.image, self.screen)
             self.map_group.add(b_sprite)    # draw using this group
             self.blocks.add(b_sprite)       # check collisions using this group
+        for q_block in q_block_data:
+            q_sprite = QuestionBlock(q_block.x, q_block.y, self.screen)
+            self.map_group.add(q_sprite)    # draw using this group
+            self.q_blocks.add(q_sprite)     # check collisions using this group
         for pipe in pipe_data:
             p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
             self.map_group.add(p_sprite)    # draw using this group
@@ -76,6 +82,7 @@ class Game:
             'down': False
         }
         self.last_update = 0
+        # action map for event loop
         self.action_map = {pygame.KEYDOWN: self.set_cam_move, pygame.KEYUP: self.unset_cam_move}
         print(self.map_layer.view_rect.center)
 
@@ -115,6 +122,7 @@ class Game:
             self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
         self.map_group.center(self.map_center)
         self.test.update(self.walls)  # update and check if not touching any walls
+        self.q_blocks.update()
         self.map_group.draw(self.screen)
         pygame.display.flip()
 

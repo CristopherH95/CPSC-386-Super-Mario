@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.2" tiledversion="1.2.0" name="super-mario" tilewidth="160" tileheight="70" tilecount="19" columns="0">
+<tileset version="1.2" tiledversion="1.2.0" name="super-mario" tilewidth="160" tileheight="70" tilecount="22" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image width="32" height="32" source="Block.png"/>
@@ -63,5 +63,19 @@
  </tile>
  <tile id="18">
   <image width="32" height="32" source="bg-blue.png"/>
+ </tile>
+ <tile id="20">
+  <image width="32" height="32" source="Question-Block-1.png"/>
+  <animation>
+   <frame tileid="20" duration="100"/>
+   <frame tileid="21" duration="100"/>
+   <frame tileid="22" duration="100"/>
+  </animation>
+ </tile>
+ <tile id="21">
+  <image width="32" height="32" source="Question-Block-2.png"/>
+ </tile>
+ <tile id="22">
+  <image width="32" height="32" source="Question-Block-3.png"/>
  </tile>
 </tileset>
