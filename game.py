@@ -46,28 +46,8 @@ class Game:
         self.map_layer = pyscroll.BufferedRenderer(self.map_data, self.screen.get_size(), alpha=True)  # map renderer
         self.map_group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=5)  # Sprite group for map
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
-        floor_data = self.tmx_data.get_layer_by_name('walls')
-        block_data = self.tmx_data.get_layer_by_name('blocks')
-        q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
-        pipe_data = self.tmx_data.get_layer_by_name('pipes')
-        self.pipes = pygame.sprite.Group()  # sprite groups for objects in map
-        self.blocks = pygame.sprite.Group()
-        self.q_blocks = pygame.sprite.Group()
-        for block in block_data:
-            b_sprite = Block(block.x, block.y, block.image, self.screen)
-            self.map_group.add(b_sprite)    # draw using this group
-            self.blocks.add(b_sprite)       # check collisions using this group
-        for q_block in q_block_data:
-            q_sprite = QuestionBlock(q_block.x, q_block.y, self.screen)
-            self.map_group.add(q_sprite)    # draw using this group
-            self.q_blocks.add(q_sprite)     # check collisions using this group
-        for pipe in pipe_data:
-            p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
-            self.map_group.add(p_sprite)    # draw using this group
-            self.pipes.add(p_sprite)        # check collisions using this group
-        self.walls = []
-        for obj in floor_data:  # walls represented as pygame Rects
-            self.walls.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+        self.game_objects = None
+        self.init_game_objects()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
         self.test = TestSprite(self.map_center, self.player_spawn)   # test sprite for player location
         self.map_layer.center(self.map_center)   # center camera
@@ -81,10 +61,37 @@ class Game:
             'up': False,
             'down': False
         }
-        self.last_update = 0
         # action map for event loop
         self.action_map = {pygame.KEYDOWN: self.set_cam_move, pygame.KEYUP: self.unset_cam_move}
         print(self.map_layer.view_rect.center)
+
+    def init_game_objects(self):
+        """Create all game objects in memory by extracting them from the map file"""
+        self.game_objects = {
+            'floors': [],
+            'blocks': pygame.sprite.Group(),
+            'q_blocks': pygame.sprite.Group(),
+            'pipes': pygame.sprite.Group(),
+            'flag': pygame.sprite.Group()
+        }
+        floor_data = self.tmx_data.get_layer_by_name('walls')
+        block_data = self.tmx_data.get_layer_by_name('blocks')
+        q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
+        pipe_data = self.tmx_data.get_layer_by_name('pipes')
+        for obj in floor_data:  # walls represented as pygame Rects
+            self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+        for block in block_data:
+            b_sprite = Block(block.x, block.y, block.image, self.screen)
+            self.map_group.add(b_sprite)    # draw using this group
+            self.game_objects['blocks'].add(b_sprite)       # check collisions using this group
+        for q_block in q_block_data:
+            q_sprite = QuestionBlock(q_block.x, q_block.y, self.screen)
+            self.map_group.add(q_sprite)    # draw using this group
+            self.game_objects['q_blocks'].add(q_sprite)     # check collisions using this group
+        for pipe in pipe_data:
+            p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
+            self.map_group.add(p_sprite)    # draw using this group
+            self.game_objects['pipes'].add(p_sprite)        # check collisions using this group
 
     def set_cam_move(self, event):
         """Set camera movement based on key pressed"""
@@ -121,8 +128,8 @@ class Game:
         if self.move_flags['down']:
             self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
         self.map_group.center(self.map_center)
-        self.test.update(self.walls)  # update and check if not touching any walls
-        self.q_blocks.update()
+        self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
+        self.game_objects['q_blocks'].update()
         self.map_group.draw(self.screen)
         pygame.display.flip()
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.2" tiledversion="1.2.0" name="super-mario" tilewidth="160" tileheight="70" tilecount="22" columns="0">
+<tileset version="1.2" tiledversion="1.2.0" name="super-mario" tilewidth="160" tileheight="70" tilecount="24" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
   <image width="32" height="32" source="Block.png"/>
@@ -43,9 +43,6 @@
  <tile id="11">
   <image width="16" height="28" source="Coin-4.png"/>
  </tile>
- <tile id="12">
-  <image width="32" height="32" source="Goal Flag.png"/>
- </tile>
  <tile id="13">
   <image width="160" height="70" source="Hill - Large.png"/>
  </tile>
@@ -77,5 +74,14 @@
  </tile>
  <tile id="22">
   <image width="32" height="32" source="Question-Block-3.png"/>
+ </tile>
+ <tile id="25">
+  <image width="32" height="32" source="pole.png"/>
+ </tile>
+ <tile id="27">
+  <image width="32" height="32" source="pole-topper.png"/>
+ </tile>
+ <tile id="28">
+  <image width="32" height="32" source="Goal-Flag.png"/>
  </tile>
 </tileset>
