@@ -57,7 +57,7 @@ class CoinBlock(Block):
                 x_pos = self.rect.left + int(self.rect.width * 0.25)
                 n_coin = Coin(x_pos, 0, self.screen)   # create new coin and move it to above the block
                 n_coin.rect.bottom = self.item_location
-                self.coins.append([n_coin, self.speed])  # coin object, and speed
+                self.coins.append([n_coin, self.speed * 2])  # coin object, and speed
                 self.map_group.add(n_coin)
                 return n_coin.points
 
