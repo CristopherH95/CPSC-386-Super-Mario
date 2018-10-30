@@ -59,4 +59,3 @@ class Item(Sprite):
         self.rect.left += self.speed
         self.bounce_off_obstacles()
         self.fall()
-
