@@ -1,13 +1,15 @@
 from animate import Animator
 from coin import Coin
+from item import Item
+from pygame import image
 from pygame.sprite import Sprite
 
 
 class Block(Sprite):
     """Generic sprite for a block/wall"""
-    def __init__(self, x, y, image, screen):
+    def __init__(self, x, y, initial_image, screen):
         super(Block, self).__init__()
-        self.image = image
+        self.image = initial_image
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = x, y
         self.screen = screen
@@ -24,9 +26,9 @@ class CoinBlock(Block):
     MOVE_UP_STATE = 'move-up'
     MOVE_DOWN_STATE = 'move-down'
 
-    def __init__(self, x, y, image, screen, map_group, coins=0):
-        super(CoinBlock, self).__init__(x, y, image, screen)
-        self.coin_counter = coins
+    def __init__(self, x, y, initial_image, screen, map_group, coins=0):
+        super(CoinBlock, self).__init__(x, y, initial_image, screen)
+        self.coin_counter = int(coins)
         self.coins = []
         self.map_group = map_group
         self.state = {
@@ -38,6 +40,11 @@ class CoinBlock(Block):
         # speed is a function of distance from hit location
         self.speed = -int(abs(self.rect.top - self.hit_location) * 0.25)
         self.item_location = self.rect.top - 1
+
+    @classmethod
+    def coin_block_from_tmx_obj(cls, obj, screen, map_group):
+        """Create a CoinBlock object from a tmx data object"""
+        return cls(obj.x, obj.y, obj.image, screen, map_group, coins=obj.properties['coins'])
 
     def check_hit(self, other=None):
         """Check if the block has been hit in a way that will 'bump' its location"""
@@ -93,17 +100,57 @@ class CoinBlock(Block):
         self.update_coins()
 
 
-class QuestionBlock(Block):
+class QuestionBlock(CoinBlock):
     """Represents a question block which can be hit to release an item"""
-    MUSHROOM = 0    # TODO: identifiers for item types
+    MUSHROOM = 'mushroom'    # TODO: identifiers for item types
+    FIRE_FLOWER = 'fire-flower'
+    STARMAN = 'starman'
 
-    def __init__(self, x, y, screen, item=MUSHROOM):
+    def __init__(self, x, y, screen, map_group, game_objects, item=MUSHROOM):
         images = ['map/Question-Block-1.png', 'map/Question-Block-2.png', 'map/Question-Block-3.png']
         self.animator = Animator(images)
-        image = self.animator.get_image()
-        self.item = item    # TODO: items
-        super(QuestionBlock, self).__init__(x, y, image, screen)
+        self.game_objects = game_objects
+        initial_image = self.animator.get_image()
+        if item in (QuestionBlock.MUSHROOM, QuestionBlock.FIRE_FLOWER, QuestionBlock.STARMAN):
+            self.item = item    # TODO: items
+            coins = None
+        else:
+            self.item = None
+            coins = 1
+        super(QuestionBlock, self).__init__(x, y, initial_image, screen, map_group, coins=coins if coins else 0)
+
+    @classmethod
+    def q_block_from_tmx_obj(cls, obj, screen, map_group, game_objects):
+        """Create a question block using tmx data"""
+        if 'item' in obj.properties:
+            item_type = obj.properties['item']
+        else:
+            item_type = None
+        return cls(obj.x, obj.y, screen, map_group, game_objects, item_type)
+
+    def check_hit(self, other=None):
+        if self.item:
+            obstacles, floor = self.game_objects['collide_objs'], self.game_objects['floors']
+            if self.item == QuestionBlock.MUSHROOM:
+                initial_image = image.load('map/mushroom.png')
+                n_item = Item(self.rect.x, self.rect.y, initial_image, self.screen, 2, obstacles, floor, rise_from=self)
+            elif self.item == QuestionBlock.FIRE_FLOWER:
+                images = ['map/fire-flower-1.png', 'map/fire-flower-2.png',
+                          'map/fire-flower-3.png', 'map/fire-flower-4.png']
+                n_item = Item(self.rect.x, self.rect.y, images, self.screen, 0,
+                              obstacles, floor, rise_from=self, animated=True)
+            else:
+                images = ['map/starman-1.png', 'map/starman-2.png', 'map/starman-3.png', 'map/starman-4.png']
+                n_item = Item(self.rect.x, self.rect.y, images, self.screen, 2,
+                              obstacles, floor, rise_from=self, animated=True)
+            self.game_objects['items'].add(n_item)
+            self.map_group.add(n_item)
+            self.item = None
+            super(QuestionBlock, self).check_hit(other)
+        elif self.coin_counter > 0:
+            super(QuestionBlock, self).check_hit(other)
 
     def update(self):
         """Update the question block to its next animated image"""
         self.image = self.animator.get_image()
+        super(QuestionBlock, self).update()
