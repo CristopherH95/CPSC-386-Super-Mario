@@ -7,7 +7,7 @@ class Enemy(Sprite):
     ENEMY_SIZE = 32
     ENEMY_SPEED = 1
 
-    def __init__(self, screen, settings, image, x, y, player, block, goombas, koopas):
+    def __init__(self, screen, settings, image, x, y, player, map_block, block, goombas, koopas):
         super().__init__()
         self.screen = screen
         self.screen_rect = self.screen.get_rect()
@@ -17,6 +17,7 @@ class Enemy(Sprite):
         self.x, self.y = x, y
         self.rect.left, self.rect.top = self.x, self.y
         self.player = player
+        self.map_block = map_block
         self.block = block
         self.goombas = goombas
         self.koopas = koopas
@@ -108,7 +109,7 @@ class Enemy(Sprite):
 
 
 class Goomba(Enemy):
-    def __init__(self, screen, settings, x, y, player, block, goombas, koopas):
+    def __init__(self, screen, settings, x, y, player, map_block, block, goombas, koopas):
         self.walk_images = ['images/enemies/GoombaLeftBoot.png',
                             'images/enemies/GoombaRightBoot.png']
         self.upside_down_images = ['images/enemies/GoombaUD1.png',
@@ -116,7 +117,7 @@ class Goomba(Enemy):
         self.crushed_images = ['images/enemies/GoombaCrushed.png']
         self.animator = Animator(self.walk_images)
         image = self.animator.get_image()
-        super().__init__(screen, settings, image, x, y, player, block, goombas, koopas)
+        super().__init__(screen, settings, image, x, y, player, map_block, block, goombas, koopas)
 
     def goomba_update(self):
         self.goomba_physics()
@@ -197,7 +198,7 @@ class Goomba(Enemy):
 
 
 class Koopa(Enemy):
-    def __init__(self, screen, settings, x, y, player, block, goombas, koopas):
+    def __init__(self, screen, settings, x, y, player, map_block, block, goombas, koopas):
         self.left_images = ['images/enemies/KoopaWalkLeft1.png',
                             'images/enemies/KoopaWalkLeft2.png']
         self.right_images = ['images/enemies/KoopaWalkRight1.png',
@@ -207,7 +208,7 @@ class Koopa(Enemy):
         self.feet_images = ['images/enemies/KoopaLegs.png']
         self.animator = Animator(self.left_images)
         image = self.animator.get_image()
-        super().__init__(screen, settings, image, x, y, player, block, goombas, koopas)
+        super().__init__(screen, settings, image, x, y, player, map_block, block, goombas, koopas)
 
         self.shell_movement = False
         self.collision_flag = False
