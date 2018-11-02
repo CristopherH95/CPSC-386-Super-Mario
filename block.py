@@ -133,15 +133,15 @@ class QuestionBlock(CoinBlock):
             obstacles, floor = self.game_objects['collide_objs'], self.game_objects['floors']
             if self.item == QuestionBlock.MUSHROOM:
                 initial_image = image.load('map/mushroom.png')
-                n_item = Item(self.rect.x, self.rect.y, initial_image, self.screen, 2, obstacles, floor, rise_from=self)
+                n_item = Item(self.rect.x, self.rect.y, initial_image, 2, obstacles, floor, rise_from=self)
             elif self.item == QuestionBlock.FIRE_FLOWER:
                 images = ['map/fire-flower-1.png', 'map/fire-flower-2.png',
                           'map/fire-flower-3.png', 'map/fire-flower-4.png']
-                n_item = Item(self.rect.x, self.rect.y, images, self.screen, 0,
+                n_item = Item(self.rect.x, self.rect.y, images, 0,
                               obstacles, floor, rise_from=self, animated=True)
             else:
                 images = ['map/starman-1.png', 'map/starman-2.png', 'map/starman-3.png', 'map/starman-4.png']
-                n_item = Item(self.rect.x, self.rect.y, images, self.screen, 2,
+                n_item = Item(self.rect.x, self.rect.y, images, 2,
                               obstacles, floor, rise_from=self, animated=True)
             self.game_objects['items'].add(n_item)
             self.map_group.add(n_item)

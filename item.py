@@ -1,7 +1,7 @@
 from animate import Animator
 from pygame.sprite import Sprite
 from pygame import image as pygimg
-from pygame import time
+from pygame import time, transform
 # TODO: Additional item types
 
 
@@ -62,7 +62,7 @@ class Item(Sprite):
         """If the item is not supported by any floor rects, then fall down"""
         falling = True
         for rect in self.floor:
-            if self.rect.bottom >= rect.top:
+            if self.rect.bottom >= rect.top and (rect.left < self.rect.center[0] < rect.right):
                 self.rect.bottom = rect.top
                 falling = False
                 break
@@ -132,6 +132,46 @@ class StarMan(Item):
             self.last_jump = time.get_ticks()
 
 
+# TODO: Explode fireball on hitting the side of an obstacle
 class FireBall(Sprite):
     """A fireball which can be thrown from Mario when he is in his fire flower state"""
-    pass
+    def __init__(self, x, y, obstacles, floor, speed=5):
+        images = [pygimg.load('super-mario-fireball-1.png'), pygimg.load('super-mario-fireball-2.png'),
+                  pygimg.load('super-mario-fireball-3.png'), pygimg.load('super-mario-fireball-4.png')]
+        images = [transform.scale(img, (8, 8)) for img in images]
+        self.animator = Animator(images)
+        self.image = self.animator.get_image()
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+        self.obstacles = obstacles
+        self.floor = floor
+        self.speed_x = speed
+        self.speed_y = speed
+        super(FireBall, self).__init__()
+
+    def apply_gravity(self):
+        """Apply gravity to the fireball, bounce off of horizontal side of surfaces"""
+        bounce = False
+        for obs in self.obstacles:
+            pts = [obs.rect.topleft, obs.rect.midtop, obs.rect.topright]
+            for pt in pts:
+                if self.rect.collidepoint(pt):
+                    bounce = True
+                    break
+            if bounce:
+                break
+        if not bounce:
+            for flr_rect in self.obstacles:
+                if self.rect.bottom >= flr_rect.top and (flr_rect.left < self.rect.center[0] < flr_rect.right):
+                    bounce = True
+                    break
+        if bounce:
+            self.speed_y = -abs(self.speed_y)   # ensure speed in y-direction is negative
+        else:
+            self.speed_y += 2   # apply gravity
+        self.rect.y += self.speed_y
+
+    def update(self):
+        """Update the position of the fireball"""
+        self.rect.x += self.speed_x
+        self.apply_gravity()
