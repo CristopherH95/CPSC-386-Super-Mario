@@ -6,7 +6,10 @@ class Animator:
     def __init__(self, image_list, delay=150, repeat=True):
         self.images = []
         for image_file in image_list:
-            self.images.append(image.load(image_file))
+            if isinstance(image_file, str):     # needs to be loaded
+                self.images.append(image.load(image_file))
+            else:       # already loaded
+                self.images.append(image_file)
         self.image_index = 0
         self.last_frame = time.get_ticks()
         self.frame_delay = delay

@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 from event_loop import EventLoop
 from pytmx.util_pygame import load_pygame
-from block import Block, QuestionBlock
+from block import Block, CoinBlock, QuestionBlock
 from pipe import Pipe
 import pygame
 import pyscroll
@@ -71,7 +71,9 @@ class Game:
             'blocks': pygame.sprite.Group(),
             'q_blocks': pygame.sprite.Group(),
             'pipes': pygame.sprite.Group(),
+            'collide_objs': pygame.sprite.Group(),  # for checking collisions with all collide-able objects
             'flag': pygame.sprite.Group(),
+            'items': pygame.sprite.Group(),
             'win-zone': []
         }
         floor_data = self.tmx_data.get_layer_by_name('walls')
@@ -82,17 +84,23 @@ class Game:
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         for block in block_data:
-            b_sprite = Block(block.x, block.y, block.image, self.screen)
+            if 'coins' in block.properties:
+                b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group)
+            else:
+                b_sprite = CoinBlock(block.x, block.y, block.image, self.screen, self.map_group, coins=0)
             self.map_group.add(b_sprite)    # draw using this group
             self.game_objects['blocks'].add(b_sprite)       # check collisions using this group
+            self.game_objects['collide_objs'].add(b_sprite)
         for q_block in q_block_data:
-            q_sprite = QuestionBlock(q_block.x, q_block.y, self.screen)
+            q_sprite = QuestionBlock.q_block_from_tmx_obj(q_block, self.screen, self.map_group, self.game_objects)
             self.map_group.add(q_sprite)    # draw using this group
             self.game_objects['q_blocks'].add(q_sprite)     # check collisions using this group
+            self.game_objects['collide_objs'].add(q_sprite)
         for pipe in pipe_data:
             p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
             self.map_group.add(p_sprite)    # draw using this group
             self.game_objects['pipes'].add(p_sprite)        # check collisions using this group
+            self.game_objects['collide_objs'].add(p_sprite)
         for flag_part in flag_data:
             if flag_part.image:
                 f_sprite = Block(flag_part.x, flag_part.y, flag_part.image, self.screen)
@@ -113,6 +121,11 @@ class Game:
             self.move_flags['up'] = True
         elif key == pygame.K_DOWN:
             self.move_flags['down'] = True
+        elif key == pygame.K_SPACE:     # spacebar to test coin blocks
+            for block in self.game_objects['blocks']:
+                block.check_hit()
+            for q_block in self.game_objects['q_blocks']:
+                q_block.check_hit()
 
     def unset_cam_move(self, event):
         """Unset camera movement based on key pressed"""
@@ -136,9 +149,12 @@ class Game:
             self.map_center = (self.map_center[0], self.map_center[1] - self.scroll_speed)
         if self.move_flags['down']:
             self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
+        for block in self.game_objects['blocks']:
+            block.update()
         self.map_group.center(self.map_center)
         self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
         self.game_objects['q_blocks'].update()
+        self.game_objects['items'].update()
         self.map_group.draw(self.screen)
         pygame.display.flip()
 
