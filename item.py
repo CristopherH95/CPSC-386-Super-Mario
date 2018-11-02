@@ -1,11 +1,13 @@
 from animate import Animator
 from pygame.sprite import Sprite
+from pygame import image as pygimg
+from pygame import time
 # TODO: Additional item types
 
 
 class Item(Sprite):
     """Represents a generic item object in the mario game"""
-    def __init__(self, x, y, image, screen, speed, obstacles, floor, rise_from=None, animated=False):
+    def __init__(self, x, y, image, speed, obstacles, floor, rise_from=None, animated=False):
         super(Item, self).__init__()
         if animated:
             self.animator = Animator(image)
@@ -13,7 +15,6 @@ class Item(Sprite):
         else:
             self.animator = None
             self.image = image
-        self.screen = screen
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = x, y
         self.speed = speed
@@ -29,7 +30,7 @@ class Item(Sprite):
         if self.rect.bottom <= self.rise_from.rect.top:
             self.rise_from = None
         else:
-            self.rect.bottom -= self.speed
+            self.rect.bottom -= 2
 
     def jump(self):
         """Have the item jump into the air"""
@@ -93,5 +94,44 @@ class Item(Sprite):
 
 
 class Mushroom(Item):
-    """A mushroom power-up which can be picked up by Mario"""
+    """A mushroom power-up which can be picked up by Mario, causing size increase"""
+    def __init__(self, x, y, obstacles, floor, rise_from=None):
+        image = pygimg.load('map/mushroom.png')
+        speed = 2
+        super(Mushroom, self).__init__(x, y, image, speed, obstacles, floor, rise_from)
+
+
+class FireFlower(Item):
+    """A fire flower item which can be picked up by Mario, giving the ability to throw fire balls"""
+    def __init__(self, x, y, obstacles, floor, rise_from=None):
+        images = [pygimg.load('fire-flower-1.png'), pygimg.load('fire-flower-2.png'),
+                  pygimg.load('fire-flower-3.png'), pygimg.load('fire-flower-4.png')]
+        speed = 0
+        super(FireFlower, self).__init__(x, y, images, speed, obstacles, floor, rise_from, True)
+
+
+class StarMan(Item):
+    """A 'star-man' item which can be picked up by Mario, causing invincibility"""
+    def __init__(self, x, y, obstacles, floor, rise_from=None):
+        images = [pygimg.load('starman-1.png'), pygimg.load('starman-2.png'),
+                  pygimg.load('starman-3.png'), pygimg.load('starman-4.png')]
+        speed = 2
+        self.last_jump = time.get_ticks()
+        self.jump_interval = 1000   # jump around every second
+        super(StarMan, self).__init__(x, y, images, speed, obstacles, floor, rise_from, True)
+
+    def update(self):
+        touch_floor = False
+        for rect in self.floor:
+            if self.rect.bottom >= rect.top:
+                self.rect.bottom = rect.top
+                touch_floor = True
+                break
+        if abs(self.last_jump - time.get_ticks()) > self.jump_interval and touch_floor:
+            self.jump()
+            self.last_jump = time.get_ticks()
+
+
+class FireBall(Sprite):
+    """A fireball which can be thrown from Mario when he is in his fire flower state"""
     pass
