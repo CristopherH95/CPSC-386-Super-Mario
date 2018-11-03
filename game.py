@@ -63,7 +63,7 @@ class Game:
     def init_game_objects(self):
         """Create all game objects in memory by extracting them from the map file"""
         self.game_objects = {
-            'floors': [],
+            'floors': [],   # TODO: Handle pre-placed coins
             'blocks': pygame.sprite.Group(),
             'q_blocks': pygame.sprite.Group(),
             'pipes': pygame.sprite.Group(),
