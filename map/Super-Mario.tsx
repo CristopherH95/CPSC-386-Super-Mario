@@ -84,25 +84,25 @@
  <tile id="28">
   <image width="32" height="32" source="Goal-Flag.png"/>
  </tile>
- <tile id="29">
-  <image width="32" height="32" source="super-mario-castle-arch.png"/>
- </tile>
- <tile id="30">
-  <image width="32" height="32" source="super-mario-castle-top.png"/>
- </tile>
- <tile id="31">
-  <image width="32" height="32" source="super-mario-castle-top-wall.png"/>
- </tile>
- <tile id="32">
-  <image width="32" height="32" source="super-mario-castle-wall.png"/>
- </tile>
- <tile id="33">
-  <image width="32" height="32" source="super-mario-castle-window-left.png"/>
- </tile>
- <tile id="34">
-  <image width="32" height="32" source="super-mario-castle-window-right.png"/>
- </tile>
  <tile id="35">
   <image width="32" height="32" source="super-mario-black.png"/>
+ </tile>
+ <tile id="36">
+  <image width="32" height="32" source="super-mario-castle-bricks.png"/>
+ </tile>
+ <tile id="37">
+  <image width="32" height="32" source="super-mario-castle-half-left.png"/>
+ </tile>
+ <tile id="38">
+  <image width="32" height="32" source="super-mario-castle-half-right.png"/>
+ </tile>
+ <tile id="39">
+  <image width="32" height="32" source="super-mario-castle-arch.png"/>
+ </tile>
+ <tile id="40">
+  <image width="32" height="32" source="super-mario-castle-top.png"/>
+ </tile>
+ <tile id="41">
+  <image width="32" height="32" source="super-mario-castle-top-wall.png"/>
  </tile>
 </tileset>

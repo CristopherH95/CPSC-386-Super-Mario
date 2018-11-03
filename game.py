@@ -2,7 +2,7 @@ from configparser import ConfigParser
 from event_loop import EventLoop
 from block import Block, CoinBlock, QuestionBlock
 from pipe import Pipe
-from maps import load_world_1_1
+from maps import load_world_map
 import pygame
 
 
@@ -38,7 +38,7 @@ class Game:
                        int(config['screen_settings']['height']))
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption(config['game_settings']['title'])
-        self.tmx_data, self.map_layer, self.map_group = load_world_1_1('map/world1.tmx', self.screen)
+        self.tmx_data, self.map_layer, self.map_group = load_world_map('map/world1.tmx', self.screen)
         self.clock = pygame.time.Clock()    # clock for limiting fps
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         self.game_objects = None
@@ -58,6 +58,7 @@ class Game:
         }
         # action map for event loop
         self.action_map = {pygame.KEYDOWN: self.set_cam_move, pygame.KEYUP: self.unset_cam_move}
+        self.paused = False
         print(self.map_layer.view_rect.center)
 
     def init_game_objects(self):
@@ -122,6 +123,8 @@ class Game:
                 block.check_hit()
             for q_block in self.game_objects['q_blocks']:
                 q_block.check_hit()
+        elif key == pygame.K_p:
+            self.paused = not self.paused
 
     def unset_cam_move(self, event):
         """Unset camera movement based on key pressed"""
@@ -137,20 +140,20 @@ class Game:
 
     def update(self):
         """Update the screen and any objects that require individual updates"""
-        if self.move_flags['right']:
-            self.map_center = (self.map_center[0] + self.scroll_speed, self.map_center[1])
-        if self.move_flags['left']:
-            self.map_center = (self.map_center[0] - self.scroll_speed, self.map_center[1])
-        if self.move_flags['up']:
-            self.map_center = (self.map_center[0], self.map_center[1] - self.scroll_speed)
-        if self.move_flags['down']:
-            self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
-        for block in self.game_objects['blocks']:
-            block.update()
-        self.map_group.center(self.map_center)
-        self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
-        self.game_objects['q_blocks'].update()
-        self.game_objects['items'].update()
+        if not self.paused:
+            if self.move_flags['right']:
+                self.map_center = (self.map_center[0] + self.scroll_speed, self.map_center[1])
+            if self.move_flags['left']:
+                self.map_center = (self.map_center[0] - self.scroll_speed, self.map_center[1])
+            if self.move_flags['up']:
+                self.map_center = (self.map_center[0], self.map_center[1] - self.scroll_speed)
+            if self.move_flags['down']:
+                self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
+            self.game_objects['blocks'].update()
+            self.map_group.center(self.map_center)
+            self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
+            self.game_objects['q_blocks'].update()
+            self.game_objects['items'].update()
         self.map_group.draw(self.screen)
         pygame.display.flip()
 
