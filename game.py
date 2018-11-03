@@ -2,6 +2,7 @@ from configparser import ConfigParser
 from event_loop import EventLoop
 from block import Block, CoinBlock, QuestionBlock
 from pipe import Pipe
+from coin import Coin
 from maps import load_world_map
 import pygame
 
@@ -61,23 +62,33 @@ class Game:
         self.paused = False
         print(self.map_layer.view_rect.center)
 
+    def retrieve_map_data(self, data_layer_name):
+        """Retrieve map data if it exists in the game's current map, otherwise return an empty list"""
+        try:
+            data = self.tmx_data.get_layer_by_name(data_layer_name)
+        except ValueError:
+            data = []
+        return data
+
     def init_game_objects(self):
         """Create all game objects in memory by extracting them from the map file"""
         self.game_objects = {
-            'floors': [],   # TODO: Handle pre-placed coins
+            'floors': [],
             'blocks': pygame.sprite.Group(),
             'q_blocks': pygame.sprite.Group(),
+            'coins': pygame.sprite.Group(),
             'pipes': pygame.sprite.Group(),
             'collide_objs': pygame.sprite.Group(),  # for checking collisions with all collide-able objects
             'flag': pygame.sprite.Group(),
             'items': pygame.sprite.Group(),
             'win-zone': []
         }
-        floor_data = self.tmx_data.get_layer_by_name('walls')
-        block_data = self.tmx_data.get_layer_by_name('blocks')
-        q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
-        pipe_data = self.tmx_data.get_layer_by_name('pipes')
-        flag_data = self.tmx_data.get_layer_by_name('flag')
+        floor_data = self.retrieve_map_data('walls')
+        block_data = self.retrieve_map_data('blocks')
+        q_block_data = self.retrieve_map_data('q-blocks')
+        pipe_data = self.retrieve_map_data('pipes')
+        flag_data = self.retrieve_map_data('flag')
+        coin_data = self.retrieve_map_data('coins')
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         for block in block_data:
@@ -93,6 +104,10 @@ class Game:
             self.map_group.add(q_sprite)    # draw using this group
             self.game_objects['q_blocks'].add(q_sprite)     # check collisions using this group
             self.game_objects['collide_objs'].add(q_sprite)
+        for coin in coin_data:
+            c_sprite = Coin(coin.x, coin.y, self.screen)
+            self.map_group.add(c_sprite)
+            self.game_objects['coins'].add(c_sprite)
         for pipe in pipe_data:
             p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
             self.map_group.add(p_sprite)    # draw using this group
@@ -154,6 +169,7 @@ class Game:
             self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
             self.game_objects['q_blocks'].update()
             self.game_objects['items'].update()
+            self.game_objects['coins'].update()
         self.map_group.draw(self.screen)
         pygame.display.flip()
 

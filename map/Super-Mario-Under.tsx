@@ -13,9 +13,6 @@
  <tile id="4">
   <image width="32" height="32" source="super-mario-black.png"/>
  </tile>
- <tile id="5">
-  <image width="64" height="64" source="super-mario-pipe-angle.png"/>
- </tile>
  <tile id="6">
   <image width="16" height="28" source="Coin-1.png"/>
   <animation>
@@ -33,5 +30,8 @@
  </tile>
  <tile id="9">
   <image width="16" height="28" source="Coin-4.png"/>
+ </tile>
+ <tile id="10">
+  <image width="64" height="64" source="super-mario-pipe-angle.png"/>
  </tile>
 </tileset>
