@@ -29,11 +29,15 @@ class CoinBlock(Block):
     def __init__(self, x, y, initial_image, screen, map_group, coins=0):
         super(CoinBlock, self).__init__(x, y, initial_image, screen)
         self.coin_counter = int(coins)
+        print(self.coin_counter)
+        self.blank_img = image.load('map/super-mario-empty-block.png') if self.coin_counter > 0 else None
         self.coins = []
         self.map_group = map_group
+        self.allow_hits = True if self.blank_img is not None else False
         self.state = {
             'meta': CoinBlock.STD_STATE,
-            'move-state': None
+            'move-state': None,
+            'blank': not self.allow_hits
         }
         self.std_location = self.rect.top
         self.hit_location = self.rect.top - int(self.rect.height * 0.5)
@@ -46,27 +50,35 @@ class CoinBlock(Block):
         """Create a CoinBlock object from a tmx data object"""
         return cls(obj.x, obj.y, obj.image, screen, map_group, coins=obj.properties['coins'])
 
+    def set_blank(self):
+        """Set the block to a blank block, which cannot be hit any longer"""
+        self.state['blank'] = True
+        self.allow_hits = False
+
     def check_hit(self, other=None):
         """Check if the block has been hit in a way that will 'bump' its location"""
-        hit = False
-        if other is not None:
-            top_points = [other.rect.topleft, other.rect.midtop, other.rect.topright]
-            for pt in top_points:
-                if self.rect.collidepoint(pt):
-                    hit = True
-                    break
-        if hit or other is None:    # leave other parameter as None to force hit state (for testing)
-            if not self.state['meta'] == CoinBlock.HIT_STATE:
-                self.state['meta'] = CoinBlock.HIT_STATE
-                self.state['move-state'] = CoinBlock.MOVE_UP_STATE
-            if self.coin_counter > 0:
-                self.coin_counter -= 1  # deduct coin counter
-                x_pos = self.rect.left + int(self.rect.width * 0.25)
-                n_coin = Coin(x_pos, 0, self.screen)   # create new coin and move it to above the block
-                n_coin.rect.bottom = self.item_location
-                self.coins.append([n_coin, self.speed * 2])  # coin object, and speed
-                self.map_group.add(n_coin)
-                return n_coin.points
+        if not self.state['blank'] or self.allow_hits:
+            hit = False
+            if other is not None:
+                top_points = [other.rect.topleft, other.rect.midtop, other.rect.topright]
+                for pt in top_points:
+                    if self.rect.collidepoint(pt):
+                        hit = True
+                        break
+            if hit or other is None:    # leave other parameter as None to force hit state (for testing)
+                if not self.state['meta'] == CoinBlock.HIT_STATE:
+                    self.state['meta'] = CoinBlock.HIT_STATE
+                    self.state['move-state'] = CoinBlock.MOVE_UP_STATE
+                if self.coin_counter > 0:
+                    self.coin_counter -= 1  # deduct coin counter
+                    x_pos = self.rect.left + int(self.rect.width * 0.25)
+                    n_coin = Coin(x_pos, 0, self.screen)   # create new coin and move it to above the block
+                    n_coin.rect.bottom = self.item_location
+                    self.coins.append([n_coin, self.speed * 2])  # coin object, and speed
+                    self.map_group.add(n_coin)
+                    if not self.coin_counter > 0:
+                        self.set_blank()
+                    return n_coin.points
 
     def update_coins(self):
         """Update all coins in the air over the block"""
@@ -97,6 +109,8 @@ class CoinBlock(Block):
                     self.state['meta'] = CoinBlock.STD_STATE
                 else:
                     self.rect.top -= self.speed
+        if self.state['blank'] and self.blank_img:
+            self.image = self.blank_img
         self.update_coins()
 
 
@@ -118,6 +132,8 @@ class QuestionBlock(CoinBlock):
             self.item = None
             coins = 1
         super(QuestionBlock, self).__init__(x, y, initial_image, screen, map_group, coins=coins if coins else 0)
+        self.blank_img = image.load('map/super-mario-empty-block.png')  # force blank image
+        self.state['blank'] = False
 
     @classmethod
     def q_block_from_tmx_obj(cls, obj, screen, map_group, game_objects):
@@ -146,11 +162,15 @@ class QuestionBlock(CoinBlock):
             self.game_objects['items'].add(n_item)
             self.map_group.add(n_item)
             self.item = None
+            self.state['blank'] = True
             super(QuestionBlock, self).check_hit(other)
         elif self.coin_counter > 0:
             super(QuestionBlock, self).check_hit(other)
 
     def update(self):
         """Update the question block to its next animated image"""
-        self.image = self.animator.get_image()
+        if not self.state['blank']:
+            self.image = self.animator.get_image()
+        else:
+            self.image = self.blank_img
         super(QuestionBlock, self).update()

@@ -46,21 +46,9 @@
   <object id="178" name="pit6" x="6048" y="768" width="32" height="192"/>
  </objectgroup>
  <objectgroup id="115" name="blocks">
-  <object id="56" gid="2" x="1152" y="640" width="32" height="32">
-   <properties>
-    <property name="coins" type="int" value="2"/>
-   </properties>
-  </object>
-  <object id="61" gid="2" x="1216" y="640" width="32" height="32">
-   <properties>
-    <property name="coins" type="int" value="4"/>
-   </properties>
-  </object>
-  <object id="62" gid="2" x="1280" y="640" width="32" height="32">
-   <properties>
-    <property name="coins" type="int" value="4"/>
-   </properties>
-  </object>
+  <object id="56" gid="2" x="1152" y="640" width="32" height="32"/>
+  <object id="61" gid="2" x="1216" y="640" width="32" height="32"/>
+  <object id="62" gid="2" x="1280" y="640" width="32" height="32"/>
   <object id="65" gid="2" x="6496" y="640" width="32" height="32"/>
   <object id="66" gid="2" x="6528" y="640" width="32" height="32"/>
   <object id="67" gid="2" x="6560" y="640" width="32" height="32"/>
@@ -101,7 +89,11 @@
   <object id="134" gid="2" x="5248" y="512" width="32" height="32"/>
   <object id="135" gid="2" x="5184" y="640" width="32" height="32"/>
   <object id="136" gid="2" x="5216" y="640" width="32" height="32"/>
-  <object id="139" gid="2" x="4128" y="640" width="32" height="32"/>
+  <object id="139" gid="2" x="4128" y="640" width="32" height="32">
+   <properties>
+    <property name="coins" type="int" value="10"/>
+   </properties>
+  </object>
   <object id="140" gid="1" x="5344" y="736" width="32" height="32"/>
   <object id="141" gid="1" x="5376" y="704" width="32" height="32"/>
   <object id="142" gid="1" x="5408" y="672" width="32" height="32"/>
