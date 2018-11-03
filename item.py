@@ -132,22 +132,36 @@ class StarMan(Item):
             self.last_jump = time.get_ticks()
 
 
-# TODO: Explode fireball on hitting the side of an obstacle
+# TODO: Fireball controller
 class FireBall(Sprite):
     """A fireball which can be thrown from Mario when he is in his fire flower state"""
-    def __init__(self, x, y, obstacles, floor, speed=5):
-        images = [pygimg.load('super-mario-fireball-1.png'), pygimg.load('super-mario-fireball-2.png'),
-                  pygimg.load('super-mario-fireball-3.png'), pygimg.load('super-mario-fireball-4.png')]
-        images = [transform.scale(img, (8, 8)) for img in images]
-        self.animator = Animator(images)
-        self.image = self.animator.get_image()
+    def __init__(self, x, y, norm_images, explode_images, obstacles, floor, speed=5):
+        self.norm_animator = Animator(norm_images)
+        self.explode_animator = Animator(explode_images, repeat=False)
+        self.image = self.norm_animator.get_image()
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
         self.obstacles = obstacles
         self.floor = floor
         self.speed_x = speed
         self.speed_y = speed
+        self.active = True
         super(FireBall, self).__init__()
+
+    def check_hit_wall(self):
+        """Check if the fireball has hit any walls"""
+        for obs in self.obstacles:
+            pts = [obs.rect.midleft, obs.rect.midright, obs.rect.bottomleft, obs.rect.bottomright]
+            for pt in pts:
+                if self.rect.collidepoint(pt):
+                    self.active = False
+                    return
+        for flr_rect in self.floor:
+            pts = [flr_rect.rect.midleft, flr_rect.rect.midright, flr_rect.rect.bottomleft, flr_rect.rect.bottomright]
+            for pt in pts:
+                if self.rect.collidepoint(pt):
+                    self.active = False
+                    return
 
     def apply_gravity(self):
         """Apply gravity to the fireball, bounce off of horizontal side of surfaces"""
@@ -161,7 +175,7 @@ class FireBall(Sprite):
             if bounce:
                 break
         if not bounce:
-            for flr_rect in self.obstacles:
+            for flr_rect in self.floor:
                 if self.rect.bottom >= flr_rect.top and (flr_rect.left < self.rect.center[0] < flr_rect.right):
                     bounce = True
                     break
@@ -175,3 +189,10 @@ class FireBall(Sprite):
         """Update the position of the fireball"""
         self.rect.x += self.speed_x
         self.apply_gravity()
+        if self.active:
+            self.image = self.norm_animator.get_image()
+            self.check_hit_wall()
+        elif self.explode_animator.is_animation_done():
+            self.kill()
+        else:
+            self.image = self.explode_animator.get_image()
