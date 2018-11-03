@@ -117,15 +117,20 @@ class CoinBlock(Block):
 class QuestionBlock(CoinBlock):
     """Represents a question block which can be hit to release an item"""
     MUSHROOM = 'mushroom'    # TODO: identifiers for item types
+    ONE_UP = '1-up'
     FIRE_FLOWER = 'fire-flower'
     STARMAN = 'starman'
 
-    def __init__(self, x, y, screen, map_group, game_objects, item=MUSHROOM):
-        images = ['map/Question-Block-1.png', 'map/Question-Block-2.png', 'map/Question-Block-3.png']
-        self.animator = Animator(images)
+    def __init__(self, x, y, screen, map_group, game_objects, item=MUSHROOM, static_img=None):
+        if not static_img:
+            images = ['map/Question-Block-1.png', 'map/Question-Block-2.png', 'map/Question-Block-3.png']
+            self.animator = Animator(images)
+            initial_image = self.animator.get_image()
+        else:
+            initial_image = static_img
+            self.animator = None
         self.game_objects = game_objects
-        initial_image = self.animator.get_image()
-        if item in (QuestionBlock.MUSHROOM, QuestionBlock.FIRE_FLOWER, QuestionBlock.STARMAN):
+        if item in (QuestionBlock.MUSHROOM, QuestionBlock.FIRE_FLOWER, QuestionBlock.STARMAN, QuestionBlock.ONE_UP):
             self.item = item    # TODO: items
             coins = None
         else:
@@ -138,10 +143,9 @@ class QuestionBlock(CoinBlock):
     @classmethod
     def q_block_from_tmx_obj(cls, obj, screen, map_group, game_objects):
         """Create a question block using tmx data"""
-        if 'item' in obj.properties:
-            item_type = obj.properties['item']
-        else:
-            item_type = None
+        item_type = obj.properties.get('item', None)
+        if obj.properties.get('invisible', None):
+            return cls(obj.x, obj.y, screen, map_group, game_objects, item_type, static_img=obj.image)
         return cls(obj.x, obj.y, screen, map_group, game_objects, item_type)
 
     def check_hit(self, other=None):
@@ -149,16 +153,21 @@ class QuestionBlock(CoinBlock):
             obstacles, floor = self.game_objects['collide_objs'], self.game_objects['floors']
             if self.item == QuestionBlock.MUSHROOM:
                 initial_image = image.load('map/mushroom.png')
-                n_item = Item(self.rect.x, self.rect.y, initial_image, 2, obstacles, floor, rise_from=self)
+                n_item = Item(self.rect.x, self.rect.y, initial_image, 2, obstacles, floor, rise_from=self,
+                              item_type=QuestionBlock.MUSHROOM)
+            elif self.item == QuestionBlock.ONE_UP:
+                initial_image = image.load('map/mushroom-1-up.png')
+                n_item = Item(self.rect.x, self.rect.y, initial_image, 2, obstacles, floor, rise_from=self,
+                              item_type=QuestionBlock.ONE_UP)
             elif self.item == QuestionBlock.FIRE_FLOWER:
                 images = ['map/fire-flower-1.png', 'map/fire-flower-2.png',
                           'map/fire-flower-3.png', 'map/fire-flower-4.png']
                 n_item = Item(self.rect.x, self.rect.y, images, 0,
-                              obstacles, floor, rise_from=self, animated=True)
+                              obstacles, floor, rise_from=self, animated=True, item_type=QuestionBlock.FIRE_FLOWER)
             else:
                 images = ['map/starman-1.png', 'map/starman-2.png', 'map/starman-3.png', 'map/starman-4.png']
                 n_item = Item(self.rect.x, self.rect.y, images, 2,
-                              obstacles, floor, rise_from=self, animated=True)
+                              obstacles, floor, rise_from=self, animated=True, item_type=QuestionBlock.STARMAN)
             self.game_objects['items'].add(n_item)
             self.map_group.add(n_item)
             self.item = None
@@ -169,8 +178,8 @@ class QuestionBlock(CoinBlock):
 
     def update(self):
         """Update the question block to its next animated image"""
-        if not self.state['blank']:
+        if not self.state['blank'] and self.animator:
             self.image = self.animator.get_image()
-        else:
+        elif self.state['blank']:
             self.image = self.blank_img
         super(QuestionBlock, self).update()

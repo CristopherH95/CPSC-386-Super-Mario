@@ -109,7 +109,7 @@ class Game:
             self.map_group.add(c_sprite)
             self.game_objects['coins'].add(c_sprite)
         for pipe in pipe_data:
-            p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
+            p_sprite = Pipe.pipe_from_tmx_obj(pipe, self.screen)
             self.map_group.add(p_sprite)    # draw using this group
             self.game_objects['pipes'].add(p_sprite)        # check collisions using this group
             self.game_objects['collide_objs'].add(p_sprite)

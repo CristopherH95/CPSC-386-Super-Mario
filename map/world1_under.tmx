@@ -39,7 +39,12 @@
   <object id="26" gid="7" x="288" y="256" width="16" height="28"/>
  </objectgroup>
  <objectgroup id="4" name="pipes">
-  <object id="29" name="pipe1" gid="11" x="448" y="480" width="64" height="64"/>
+  <object id="29" name="pipe1" gid="11" x="448" y="480" width="64" height="64">
+   <properties>
+    <property name="destination" value="world1.tmx"/>
+    <property name="spawn" value="pipe5"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup id="7" name="spawn-points">
   <object id="27" name="player" x="64" y="32">

@@ -7,7 +7,7 @@ from pygame import time
 
 class Item(Sprite):
     """Represents a generic item object in the mario game"""
-    def __init__(self, x, y, image, speed, obstacles, floor, rise_from=None, animated=False):
+    def __init__(self, x, y, image, speed, obstacles, floor, item_type, rise_from=None, animated=False):
         super(Item, self).__init__()
         if animated:
             self.animator = Animator(image)
@@ -15,6 +15,7 @@ class Item(Sprite):
         else:
             self.animator = None
             self.image = image
+        self.item_type = item_type
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.top = x, y
         self.speed = speed
@@ -46,23 +47,27 @@ class Item(Sprite):
 
     def bounce_off_obstacles(self):
         """Check if the item has hit any obstacles which cause it to bounce the other direction"""
-        hit = False
         for obs in self.obstacles:
             pts = [obs.rect.bottomleft, obs.rect.midleft,
                    obs.rect.bottomright, obs.rect.midright]
             for pt in pts:
                 if self.rect.collidepoint(pt):
                     self.flip_direction()
-                    hit = True
-                    break
-            if hit:
-                break
+                    return
+        for rect in self.floor:
+            pts = [rect.midleft, rect.midright, rect.bottomleft, rect.bottomright]
+            y_cap = rect.top
+            for pt in pts:
+                if self.rect.collidepoint(pt) or \
+                        ((self.rect.left == rect.right or self.rect.right == rect.left) and self.rect.top > y_cap):
+                    self.flip_direction()
+                    return
 
     def fall(self):
         """If the item is not supported by any floor rects, then fall down"""
         falling = True
         for rect in self.floor:
-            if self.rect.bottom >= rect.top and (rect.left < self.rect.center[0] < rect.right):
+            if self.rect.bottom == rect.top and (rect.left < self.rect.center[0] < rect.right):
                 self.rect.bottom = rect.top
                 falling = False
                 break
