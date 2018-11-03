@@ -1,7 +1,7 @@
 from animate import Animator
-from pygame.sprite import Sprite
+from pygame.sprite import Sprite, Group
 from pygame import image as pygimg
-from pygame import time, transform
+from pygame import time
 # TODO: Additional item types
 
 
@@ -196,3 +196,28 @@ class FireBall(Sprite):
             self.kill()
         else:
             self.image = self.explode_animator.get_image()
+
+
+class FireBallController:
+    """Manages fireballs and provides an interface for using them"""
+    def __init__(self, screen, map_group, obstacles, floor, origin):
+        self.screen = screen
+        self.origin = origin
+        self.map_group = map_group
+        self.obstacles = obstacles
+        self.floor = floor
+        self.fireballs = Group()
+        self.fb_images = [pygimg.load('map/super-mario-fireball-1'), pygimg.load('map/super-mario-fireball-2'),
+                          pygimg.load('map/super-mario-fireball-3'), pygimg.load('map/super-mario-fireball-4')]
+        self.exp_images = [pygimg.load('map/super-mario-fireball-explode-1'),
+                           pygimg.load('map/super-mario-fireball-explode-2'),
+                           pygimg.load('map/super-mario-fireball-explode-3')]
+
+    def throw_fireball(self):
+        """If there are not two fireballs already active, then throw a new fireball"""
+        if len(self.fireballs) < 2:
+            pass    # TODO: throw fireball based on direction Mario is facing
+
+    def update_fireballs(self):
+        """Update all fireballs currently in play"""
+        self.fireballs.update()

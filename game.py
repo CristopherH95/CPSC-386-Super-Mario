@@ -1,10 +1,9 @@
 from configparser import ConfigParser
 from event_loop import EventLoop
-from pytmx.util_pygame import load_pygame
 from block import Block, CoinBlock, QuestionBlock
 from pipe import Pipe
+from maps import load_world_1_1
 import pygame
-import pyscroll
 
 
 # test sprite
@@ -39,11 +38,8 @@ class Game:
                        int(config['screen_settings']['height']))
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption(config['game_settings']['title'])
-        self.tmx_data = load_pygame('map/world1.tmx')    # load map data
-        self.map_data = pyscroll.data.TiledMapData(self.tmx_data)   # get PyScroll map data
+        self.tmx_data, self.map_layer, self.map_group = load_world_1_1('map/world1.tmx', self.screen)
         self.clock = pygame.time.Clock()    # clock for limiting fps
-        self.map_layer = pyscroll.BufferedRenderer(self.map_data, self.screen.get_size(), alpha=True)  # map renderer
-        self.map_group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=5)  # Sprite group for map
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         self.game_objects = None
         self.init_game_objects()
