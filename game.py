@@ -5,7 +5,6 @@ from block import Block, QuestionBlock
 from pipe import Pipe
 import pygame
 import pyscroll
-import mario
 
 
 # test sprite
@@ -102,14 +101,6 @@ class Game:
             else:
                 self.game_objects['win-zone'].append(pygame.Rect(flag_part.x, flag_part.y,
                                                                  flag_part.width, flag_part.height))
-
-
-    def setup_mario(self):
-        """Places Mario at the beginning of the level"""
-        self.mario = mario.Mario()
-        self.mario.rect.x = self.viewport.x + 110
-        self.mario.rect.bottom = c.GROUND_HEIGHT
-
 
     def set_cam_move(self, event):
         """Set camera movement based on key pressed"""
