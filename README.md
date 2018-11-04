@@ -1,6 +1,0 @@
-# CPSC-386-Super-Mario
-Super Mario Project for CPSC-386
-
-Project Members : Cristopher Hernandez, Alexis Garcia, Joseph Chau
-
-Trello : https://trello.com/b/8FGbcYOA/cpsc-386-super-mario
