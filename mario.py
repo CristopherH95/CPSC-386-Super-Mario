@@ -657,6 +657,17 @@ class Mario(pg.sprite.Sprite):
             self.transition_timer = 0
             self.become_big()
 
+    def become_big(self):
+        self.big = True
+        self.right_frames = self.right_big_normal_frames
+        self.left_frames = self.left_big_normal_frames
+        bottom = self.rect.bottom
+        left = self.rect.x
+        image = self.right_frames[0]
+        self.rect = image.get_rect()
+        self.rect.bottom = bottom
+        self.rect.x = left
+
     def timer_between_these_two_times(self,start_time, end_time):
         """Checks if the timer is at the right time for the action."""
         if (self.current_time - self.transition_timer) >= start_time\
