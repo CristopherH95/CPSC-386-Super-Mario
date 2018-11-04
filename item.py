@@ -221,8 +221,19 @@ class FireBallController:
     def throw_fireball(self):
         """If there are not two fireballs already active, then throw a new fireball"""
         if len(self.fireballs) < 2:
-            pass    # TODO: throw fireball based on direction Mario is facing
+            if self.origin.facing_right:
+                n_fireball = FireBall(self.origin.rect.x + 1, self.origin.rect.topright, self.fb_images,
+                                      self.exp_images, self.obstacles, self.floor)
+            else:
+                n_fireball = FireBall(self.origin.rect.x - 1, self.origin.rect.topleft, self.fb_images, self.exp_images,
+                                      self.obstacles, self.floor, speed=-5)
+            self.fireballs.add(n_fireball)
+            self.map_group.add(n_fireball)
 
     def update_fireballs(self):
         """Update all fireballs currently in play"""
         self.fireballs.update()
+        for fb in self.fireballs:
+            if fb.rect.x < 0 or fb.rect.x > self.screen.get_width() or \
+                    (fb.rect.y < 0 or fb.rect.y > self.screen.get_height()):
+                fb.kill()
