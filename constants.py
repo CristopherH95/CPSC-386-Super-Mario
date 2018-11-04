@@ -31,6 +31,7 @@ FLAGPOLE = 'flag pole'
 WALKING_TO_CASTLE = 'walking to castle'
 END_OF_LEVEL_FALL = 'end of level fall'
 DEATH_JUMP = 'death jump'
+MARIO_DEAD = 'mario dead'
 
 #FLAG STATE
 TOP_OF_POLE = 'top of pole'
