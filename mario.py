@@ -283,7 +283,6 @@ class Mario(pg.sprite.Sprite):
                              self.left_small_black_frames]
 
         self.invincible_small_frames_list = [self.normal_small_frames,
-                                          self.green_small_frames,
                                           self.red_small_frames,
                                           self.black_small_frames]
 
@@ -300,7 +299,6 @@ class Mario(pg.sprite.Sprite):
                             self.left_fire_frames]
 
         self.invincible_big_frames_list = [self.normal_big_frames,
-                                           self.green_big_frames,
                                            self.red_big_frames,
                                            self.black_big_frames]
 
@@ -718,12 +716,10 @@ class Mario(pg.sprite.Sprite):
 
         if self.facing_right:
             frames = [self.right_fire_frames[3],
-                      self.right_big_green_frames[3],
                       self.right_big_red_frames[3],
                       self.right_big_black_frames[3]]
         else:
             frames = [self.left_fire_frames[3],
-                      self.left_big_green_frames[3],
                       self.left_big_red_frames[3],
                       self.left_big_black_frames[3]]
 
