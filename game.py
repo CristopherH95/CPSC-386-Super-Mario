@@ -1,11 +1,10 @@
 from configparser import ConfigParser
 from event_loop import EventLoop
-from pytmx.util_pygame import load_pygame
-from block import Block, QuestionBlock
-from mario import Mario
+from block import Block, CoinBlock, QuestionBlock
 from pipe import Pipe
+from coin import Coin
+from maps import load_world_map
 import pygame
-import pyscroll
 
 
 # test sprite
@@ -40,11 +39,8 @@ class Game:
                        int(config['screen_settings']['height']))
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption(config['game_settings']['title'])
-        self.tmx_data = load_pygame('map/world1.tmx')    # load map data
-        self.map_data = pyscroll.data.TiledMapData(self.tmx_data)   # get PyScroll map data
+        self.tmx_data, self.map_layer, self.map_group = load_world_map('map/world1.tmx', self.screen)
         self.clock = pygame.time.Clock()    # clock for limiting fps
-        self.map_layer = pyscroll.BufferedRenderer(self.map_data, self.screen.get_size(), alpha=True)  # map renderer
-        self.map_group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=5)  # Sprite group for map
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         self.game_objects = None
         self.init_game_objects()
@@ -64,7 +60,16 @@ class Game:
         }
         # action map for event loop
         self.action_map = {pygame.KEYDOWN: self.set_cam_move, pygame.KEYUP: self.unset_cam_move}
+        self.paused = False
         print(self.map_layer.view_rect.center)
+
+    def retrieve_map_data(self, data_layer_name):
+        """Retrieve map data if it exists in the game's current map, otherwise return an empty list"""
+        try:
+            data = self.tmx_data.get_layer_by_name(data_layer_name)
+        except ValueError:
+            data = []
+        return data
 
     def init_game_objects(self):
         """Create all game objects in memory by extracting them from the map file"""
@@ -72,29 +77,43 @@ class Game:
             'floors': [],
             'blocks': pygame.sprite.Group(),
             'q_blocks': pygame.sprite.Group(),
+            'coins': pygame.sprite.Group(),
             'pipes': pygame.sprite.Group(),
+            'collide_objs': pygame.sprite.Group(),  # for checking collisions with all collide-able objects
             'flag': pygame.sprite.Group(),
+            'items': pygame.sprite.Group(),
             'win-zone': []
         }
-        floor_data = self.tmx_data.get_layer_by_name('walls')
-        block_data = self.tmx_data.get_layer_by_name('blocks')
-        q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
-        pipe_data = self.tmx_data.get_layer_by_name('pipes')
-        flag_data = self.tmx_data.get_layer_by_name('flag')
+        floor_data = self.retrieve_map_data('walls')
+        block_data = self.retrieve_map_data('blocks')
+        q_block_data = self.retrieve_map_data('q-blocks')
+        pipe_data = self.retrieve_map_data('pipes')
+        flag_data = self.retrieve_map_data('flag')
+        coin_data = self.retrieve_map_data('coins')
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         for block in block_data:
-            b_sprite = Block(block.x, block.y, block.image, self.screen)
+            if 'coins' in block.properties:
+                b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group)
+            else:
+                b_sprite = CoinBlock(block.x, block.y, block.image, self.screen, self.map_group, coins=0)
             self.map_group.add(b_sprite)    # draw using this group
             self.game_objects['blocks'].add(b_sprite)       # check collisions using this group
+            self.game_objects['collide_objs'].add(b_sprite)
         for q_block in q_block_data:
-            q_sprite = QuestionBlock(q_block.x, q_block.y, self.screen)
+            q_sprite = QuestionBlock.q_block_from_tmx_obj(q_block, self.screen, self.map_group, self.game_objects)
             self.map_group.add(q_sprite)    # draw using this group
             self.game_objects['q_blocks'].add(q_sprite)     # check collisions using this group
+            self.game_objects['collide_objs'].add(q_sprite)
+        for coin in coin_data:
+            c_sprite = Coin(coin.x, coin.y, self.screen)
+            self.map_group.add(c_sprite)
+            self.game_objects['coins'].add(c_sprite)
         for pipe in pipe_data:
-            p_sprite = Pipe(pipe.x, pipe.y, pipe.image, self.screen)
+            p_sprite = Pipe.pipe_from_tmx_obj(pipe, self.screen)
             self.map_group.add(p_sprite)    # draw using this group
             self.game_objects['pipes'].add(p_sprite)        # check collisions using this group
+            self.game_objects['collide_objs'].add(p_sprite)
         for flag_part in flag_data:
             if flag_part.image:
                 f_sprite = Block(flag_part.x, flag_part.y, flag_part.image, self.screen)
@@ -115,6 +134,13 @@ class Game:
             self.move_flags['up'] = True
         elif key == pygame.K_DOWN:
             self.move_flags['down'] = True
+        elif key == pygame.K_SPACE:     # spacebar to test coin blocks
+            for block in self.game_objects['blocks']:
+                block.check_hit()
+            for q_block in self.game_objects['q_blocks']:
+                q_block.check_hit()
+        elif key == pygame.K_p:
+            self.paused = not self.paused
 
     def unset_cam_move(self, event):
         """Unset camera movement based on key pressed"""
@@ -130,17 +156,21 @@ class Game:
 
     def update(self):
         """Update the screen and any objects that require individual updates"""
-        if self.move_flags['right']:
-            self.map_center = (self.map_center[0] + self.scroll_speed, self.map_center[1])
-        if self.move_flags['left']:
-            self.map_center = (self.map_center[0] - self.scroll_speed, self.map_center[1])
-        if self.move_flags['up']:
-            self.map_center = (self.map_center[0], self.map_center[1] - self.scroll_speed)
-        if self.move_flags['down']:
-            self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
-        self.map_group.center(self.map_center)
-        self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
-        self.game_objects['q_blocks'].update()
+        if not self.paused:
+            if self.move_flags['right']:
+                self.map_center = (self.map_center[0] + self.scroll_speed, self.map_center[1])
+            if self.move_flags['left']:
+                self.map_center = (self.map_center[0] - self.scroll_speed, self.map_center[1])
+            if self.move_flags['up']:
+                self.map_center = (self.map_center[0], self.map_center[1] - self.scroll_speed)
+            if self.move_flags['down']:
+                self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
+            self.game_objects['blocks'].update()
+            self.map_group.center(self.map_center)
+            self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
+            self.game_objects['q_blocks'].update()
+            self.game_objects['items'].update()
+            self.game_objects['coins'].update()
         self.map_group.draw(self.screen)
         pygame.display.flip()
 

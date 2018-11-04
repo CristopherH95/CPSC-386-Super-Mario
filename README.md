@@ -4,3 +4,6 @@ Super Mario Project for CPSC-386
 Project Members : Cristopher Hernandez, Alexis Garcia, Joseph Chau
 
 Trello : https://trello.com/b/8FGbcYOA/cpsc-386-super-mario
+
+Some map sprites are used courtesy of (http://www.videogamesprites.net/SuperMarioBros1/)
+
