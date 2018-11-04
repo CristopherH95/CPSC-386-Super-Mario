@@ -2,6 +2,7 @@ from configparser import ConfigParser
 from event_loop import EventLoop
 from pytmx.util_pygame import load_pygame
 from block import Block, QuestionBlock
+from mario import Mario
 from pipe import Pipe
 import pygame
 import pyscroll
@@ -48,7 +49,8 @@ class Game:
         self.game_objects = None
         self.init_game_objects()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
-        self.test = TestSprite(self.map_center)   # test sprite for player location
+        self.test = Mario()   # test sprite for player location
+        self.test.rect.x, self.test.rect.y = self.player_spawn.x, self.player_spawn.y
         self.map_layer.center(self.map_center)   # center camera
         self.map_layer.zoom = 0.725     # camera zoom
         self.map_group.add(self.test)   # add test sprite to map group
