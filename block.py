@@ -1,6 +1,6 @@
 from animate import Animator
 from coin import Coin
-from item import Item
+from item import Mushroom, FireFlower, StarMan, OneUp
 from pygame import image
 from pygame.sprite import Sprite
 
@@ -29,7 +29,6 @@ class CoinBlock(Block):
     def __init__(self, x, y, initial_image, screen, map_group, coins=0):
         super(CoinBlock, self).__init__(x, y, initial_image, screen)
         self.coin_counter = int(coins)
-        print(self.coin_counter)
         self.blank_img = image.load('map/super-mario-empty-block.png') if self.coin_counter > 0 else None
         self.coins = []
         self.map_group = map_group
@@ -116,7 +115,7 @@ class CoinBlock(Block):
 
 class QuestionBlock(CoinBlock):
     """Represents a question block which can be hit to release an item"""
-    MUSHROOM = 'mushroom'    # TODO: identifiers for item types
+    MUSHROOM = 'mushroom'
     ONE_UP = '1-up'
     FIRE_FLOWER = 'fire-flower'
     STARMAN = 'starman'
@@ -152,22 +151,13 @@ class QuestionBlock(CoinBlock):
         if self.item:
             obstacles, floor = self.game_objects['collide_objs'], self.game_objects['floors']
             if self.item == QuestionBlock.MUSHROOM:
-                initial_image = image.load('map/mushroom.png')
-                n_item = Item(self.rect.x, self.rect.y, initial_image, 2, obstacles, floor, rise_from=self,
-                              item_type=QuestionBlock.MUSHROOM)
+                n_item = Mushroom(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
             elif self.item == QuestionBlock.ONE_UP:
-                initial_image = image.load('map/mushroom-1-up.png')
-                n_item = Item(self.rect.x, self.rect.y, initial_image, 2, obstacles, floor, rise_from=self,
-                              item_type=QuestionBlock.ONE_UP)
+                n_item = OneUp(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
             elif self.item == QuestionBlock.FIRE_FLOWER:
-                images = ['map/fire-flower-1.png', 'map/fire-flower-2.png',
-                          'map/fire-flower-3.png', 'map/fire-flower-4.png']
-                n_item = Item(self.rect.x, self.rect.y, images, 0,
-                              obstacles, floor, rise_from=self, animated=True, item_type=QuestionBlock.FIRE_FLOWER)
+                n_item = FireFlower(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
             else:
-                images = ['map/starman-1.png', 'map/starman-2.png', 'map/starman-3.png', 'map/starman-4.png']
-                n_item = Item(self.rect.x, self.rect.y, images, 2,
-                              obstacles, floor, rise_from=self, animated=True, item_type=QuestionBlock.STARMAN)
+                n_item = StarMan(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
             self.game_objects['items'].add(n_item)
             self.map_group.add(n_item)
             self.item = None
