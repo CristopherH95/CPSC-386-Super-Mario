@@ -1,15 +1,54 @@
 import pygame as pg
 import constants as c
 import tools
+# import item as powerups
 
-GFX = tools.load_all_gfx("images")
-SFX = tools.load_all_sfx("sounds")
+# GFX = tools.load_all_gfx("images")    # moved loading the sprite sheet and sounds to inside the class
+
+# **BEGIN NOTES**
+
+# In python, code outside structures (such as classes/functions) is typically evaluated on import
+# So, using GFX and SFX as constants before the class caused the program to fail, since the methods the functions use
+# require the display to be fully initialized, which it is not yet ready when importing the Mario class
+
+# for current time, in general you can just use pygame.time.get_ticks
+
+# FIXME: code formatting needs attention so that PyCharm will evaluate the file to a green check mark
+
+# I will work on finishing a FireBallController object, from that class you will only need to call throw_fireball
+# don't worry about the fireball throwing right now, just focus on other things
+
+# The animations look good from what I can see!
+
+# FIXME: Right now Mario doesn't move on the map
+# I see you have code for changing velocity and using acceleration
+# but it doesn't look like you're applying the changes to Mario's rect anywhere
+
+# TODO: In order for Mario to fall towards the ground (and stop once touching it) there needs to be checks for the floor
+# the floor of the level is made up of a series of rect objects, so if needed you could maintain a reference to them
+# in the class, or take them in as an argument to your update method to get access to them
+# if you want to look at examples, Alexis and I both have checks for the floor in our code (for instance, in my items.py
+# file)
+
+# in general, I can see you put a lot of work into this. So thank you for your help!
+
+# Also, as a general recommendation it can be helpful to break up your commits to github a little bit.
+# So you have a larger number of breakpoints in your changes,
+# that way if you ever need to revert one, or figure out if one of them is causing an issue, it is easier to resolve
+
+# **END NOTES**
 
 
 class Mario(pg.sprite.Sprite):
     def __init__(self):
         pg.sprite.Sprite.__init__(self)
-        self.sprite_sheet = GFX['mario_bros']
+        self.sprite_sheet = pg.image.load('images/mario_bros.png')  # moved the GFX and SFX loading to here
+        if self.sprite_sheet.get_alpha():
+            self.sprite_sheet = self.sprite_sheet.convert_alpha()
+        else:
+            self.sprite_sheet = self.sprite_sheet.convert()
+            self.sprite_sheet.set_colorkey((255, 0, 255))
+        self.SFX = tools.load_all_sfx("sounds")
 
         self.setup_timers()
         self.setup_state_booleans()
@@ -332,23 +371,22 @@ class Mario(pg.sprite.Sprite):
                                     int(rect.height*c.SIZE_MULTIPLIER)))
         return image
 
-    def update(self, keys, game_info, fire_group):
+    def update(self, keys):
         """Updates Mario's states and animations once per frame"""
-        self.current_time = game_info[c.CURRENT_TIME]
-        self.handle_state(keys, fire_group)
+        self.handle_state(keys)
         self.check_for_special_state()
         self.animation()
 
-    def handle_state(self, keys, fire_group):
+    def handle_state(self, keys):
         """Determines Mario's behavior based on his state"""
         if self.state == c.STAND:
-            self.standing(keys, fire_group)
+            self.standing(keys)
         elif self.state == c.WALK:
-            self.walking(keys, fire_group)
+            self.walking(keys)
         elif self.state == c.JUMP:
-            self.jumping(keys, fire_group)
+            self.jumping(keys)
         elif self.state == c.FALL:
-            self.falling(keys, fire_group)
+            self.falling(keys)
         elif self.state == c.DEATH_JUMP:
             self.jumping_to_death()
         elif self.state == c.SMALL_TO_BIG:
@@ -366,7 +404,7 @@ class Mario(pg.sprite.Sprite):
         elif self.state == c.END_OF_LEVEL_FALL:
             self.falling_at_end_of_level()
 
-    def standing(self, keys, fire_group):
+    def standing(self, keys):
         """This function is called if Mario is standing still"""
         self.check_to_allow_jump(keys)
         self.check_to_allow_fireball(keys)
@@ -377,7 +415,7 @@ class Mario(pg.sprite.Sprite):
 
         if keys[tools.keybinding['action']]:
             if self.fire and self.allow_fireball:
-                self.shoot_fireball(fire_group)
+                self.shoot_fireball()
 
         if keys[tools.keybinding['down']]:
             self.crouching = True
@@ -393,9 +431,9 @@ class Mario(pg.sprite.Sprite):
         elif keys[tools.keybinding['jump']]:
             if self.allow_jump:
                 if self.big:
-                    SFX['big_jump'].play()
+                    self.SFX['big_jump'].play()
                 else:
-                    SFX['small_jump'].play()
+                    self.SFX['small_jump'].play()
                 self.state = c.JUMP
                 self.y_vel = c.JUMP_VEL
         else:
@@ -427,17 +465,17 @@ class Mario(pg.sprite.Sprite):
         if not keys[tools.keybinding['action']]:
             self.allow_fireball = True
 
-    def shoot_fireball(self, powerup_group):
+    def shoot_fireball(self):
         """Shoots fireball, allowing no more than two to exist at once"""
-        SFX['fireball'].play()
-        self.fireball_count = self.count_number_of_fireballs(powerup_group)
+        self.SFX['fireball'].play()
+        # self.fireball_count = self.count_number_of_fireballs(powerup_group)
 
-        if (self.current_time - self.last_fireball_time) > 200:
+        if (pg.time.get_ticks() - self.last_fireball_time) > 200:
             if self.fireball_count < 2:
                 self.allow_fireball = False
-                powerup_group.add(
-                    powerups.FireBall(self.rect.right, self.rect.y, self.facing_right))
-                self.last_fireball_time = self.current_time
+                # powerup_group.add(
+                #     powerups.FireBall(self.rect.right, self.rect.y, self.facing_right))
+                self.last_fireball_time = pg.time.get_ticks()
 
                 self.frame_index = 6
                 if self.facing_right:
@@ -445,17 +483,17 @@ class Mario(pg.sprite.Sprite):
                 else:
                     self.image = self.left_frames[self.frame_index]
 
-    def count_number_of_fireballs(self, powerup_group):
-        """Count number of fireballs that exist in the level"""
-        fireball_list = []
+    # def count_number_of_fireballs(self, powerup_group):
+    #     """Count number of fireballs that exist in the level"""
+    #     fireball_list = []
+    #
+    #     for powerup in powerup_group:
+    #         if powerup.name == c.FIREBALL:
+    #             fireball_list.append(powerup)
+    #
+    #     return len(fireball_list)
 
-        for powerup in powerup_group:
-            if powerup.name == c.FIREBALL:
-                fireball_list.append(powerup)
-
-        return len(fireball_list)
-
-    def walking(self, keys, fire_group):
+    def walking(self, keys):
         """This function is called when Mario is in a walking state
         It changes the frame, checks for holding down the run button,
         checks for a jump, then adjusts the state if necessary"""
@@ -465,22 +503,22 @@ class Mario(pg.sprite.Sprite):
 
         if self.frame_index == 0:
             self.frame_index += 1
-            self.walking_timer = self.current_time
+            self.walking_timer = pg.time.get_ticks()
         else:
-            if (self.current_time - self.walking_timer >
+            if (pg.time.get_ticks() - self.walking_timer >
                     self.calculate_animation_speed()):
                 if self.frame_index < 3:
                     self.frame_index += 1
                 else:
                     self.frame_index = 1
 
-                self.walking_timer = self.current_time
+                self.walking_timer = pg.time.get_ticks()
 
         if keys[tools.keybinding['action']]:
             self.max_x_vel = c.MAX_RUN_SPEED
             self.x_accel = c.RUN_ACCEL
             if self.fire and self.allow_fireball:
-                self.shoot_fireball(fire_group)
+                self.shoot_fireball()
         else:
             self.max_x_vel = c.MAX_WALK_SPEED
             self.x_accel = c.WALK_ACCEL
@@ -488,9 +526,9 @@ class Mario(pg.sprite.Sprite):
         if keys[tools.keybinding['jump']]:
             if self.allow_jump:
                 if self.big:
-                    SFX['big_jump'].play()
+                    self.SFX['big_jump'].play()
                 else:
-                    SFX['small_jump'].play()
+                    self.SFX['small_jump'].play()
                 self.state = c.JUMP
                 if self.x_vel > 4.5 or self.x_vel < -4.5:
                     self.y_vel = c.JUMP_VEL - .5
@@ -556,7 +594,7 @@ class Mario(pg.sprite.Sprite):
 
         return animation_speed
 
-    def jumping(self, keys, fire_group):
+    def jumping(self, keys):
         """Called when Mario is in a JUMP state."""
         self.allow_jump = False
         self.frame_index = 4
@@ -582,9 +620,9 @@ class Mario(pg.sprite.Sprite):
 
         if keys[tools.keybinding['action']]:
             if self.fire and self.allow_fireball:
-                self.shoot_fireball(fire_group)
+                self.shoot_fireball()
 
-    def falling(self, keys, fire_group):
+    def falling(self, keys):
         """Called when Mario is in a FALL state"""
         self.check_to_allow_fireball(keys)
         if self.y_vel < c.MAX_Y_VEL:
@@ -600,20 +638,20 @@ class Mario(pg.sprite.Sprite):
 
         if keys[tools.keybinding['action']]:
             if self.fire and self.allow_fireball:
-                self.shoot_fireball(fire_group)
+                self.shoot_fireball()
 
     def jumping_to_death(self):
         """Called when Mario is in a DEATH_JUMP state"""
         if self.death_timer == 0:
-            self.death_timer = self.current_time
-        elif (self.current_time - self.death_timer) > 500:
+            self.death_timer = pg.time.get_ticks()
+        elif (pg.time.get_ticks() - self.death_timer) > 500:
             self.rect.y += self.y_vel
             self.y_vel += self.gravity
 
-    def start_death_jump(self, game_info):
+    def start_death_jump(self):
         """Used to put Mario in a DEATH_JUMP state"""
         self.dead = True
-        game_info[c.MARIO_DEAD] = True
+        # game_info[c.MARIO_DEAD] = True
         self.y_vel = -11
         self.gravity = .5
         self.frame_index = 6
@@ -627,7 +665,7 @@ class Mario(pg.sprite.Sprite):
         self.in_transition_state = True
 
         if self.transition_timer == 0:
-            self.transition_timer = self.current_time
+            self.transition_timer = pg.time.get_ticks()
         elif self.timer_between_these_two_times(135, 200):
             self.set_mario_to_middle_image()
         elif self.timer_between_these_two_times(200, 365):
@@ -668,8 +706,8 @@ class Mario(pg.sprite.Sprite):
 
     def timer_between_these_two_times(self,start_time, end_time):
         """Checks if the timer is at the right time for the action."""
-        if (self.current_time - self.transition_timer) >= start_time\
-            and (self.current_time - self.transition_timer) < end_time:
+        if (pg.time.get_ticks() - self.transition_timer) >= start_time\
+            and (pg.time.get_ticks() - self.transition_timer) < end_time:
             return True
 
     def set_mario_to_middle_image(self):
@@ -724,36 +762,36 @@ class Mario(pg.sprite.Sprite):
                       self.left_big_black_frames[3]]
 
         if self.fire_transition_timer == 0:
-            self.fire_transition_timer = self.current_time
-        elif (self.current_time - self.fire_transition_timer) > 65 and (self.current_time - self.fire_transition_timer) < 130:
+            self.fire_transition_timer = pg.time.get_ticks()
+        elif (pg.time.get_ticks() - self.fire_transition_timer) > 65 and (pg.time.get_ticks() - self.fire_transition_timer) < 130:
             self.image = frames[0]
-        elif (self.current_time - self.fire_transition_timer) < 195:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 195:
             self.image = frames[1]
-        elif (self.current_time - self.fire_transition_timer) < 260:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 260:
             self.image = frames[2]
-        elif (self.current_time - self.fire_transition_timer) < 325:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 325:
             self.image = frames[3]
-        elif (self.current_time - self.fire_transition_timer) < 390:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 390:
             self.image = frames[0]
-        elif (self.current_time - self.fire_transition_timer) < 455:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 455:
             self.image = frames[1]
-        elif (self.current_time - self.fire_transition_timer) < 520:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 520:
             self.image = frames[2]
-        elif (self.current_time - self.fire_transition_timer) < 585:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 585:
             self.image = frames[3]
-        elif (self.current_time - self.fire_transition_timer) < 650:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 650:
             self.image = frames[0]
-        elif (self.current_time - self.fire_transition_timer) < 715:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 715:
             self.image = frames[1]
-        elif (self.current_time - self.fire_transition_timer) < 780:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 780:
             self.image = frames[2]
-        elif (self.current_time - self.fire_transition_timer) < 845:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 845:
             self.image = frames[3]
-        elif (self.current_time - self.fire_transition_timer) < 910:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 910:
             self.image = frames[0]
-        elif (self.current_time - self.fire_transition_timer) < 975:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 975:
             self.image = frames[1]
-        elif (self.current_time - self.fire_transition_timer) < 1040:
+        elif (pg.time.get_ticks() - self.fire_transition_timer) < 1040:
             self.image = frames[2]
             self.fire = True
             self.in_transition_state = False
@@ -781,48 +819,48 @@ class Mario(pg.sprite.Sprite):
                      ]
 
         if self.transition_timer == 0:
-            self.transition_timer = self.current_time
-        elif (self.current_time - self.transition_timer) < 265:
+            self.transition_timer = pg.time.get_ticks()
+        elif (pg.time.get_ticks() - self.transition_timer) < 265:
             self.image = frames[0]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 330:
+        elif (pg.time.get_ticks() - self.transition_timer) < 330:
             self.image = frames[1]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 395:
+        elif (pg.time.get_ticks() - self.transition_timer) < 395:
             self.image = frames[2]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 460:
+        elif (pg.time.get_ticks() - self.transition_timer) < 460:
             self.image = frames[1]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 525:
+        elif (pg.time.get_ticks() - self.transition_timer) < 525:
             self.image = frames[2]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 590:
+        elif (pg.time.get_ticks() - self.transition_timer) < 590:
             self.image = frames[1]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 655:
+        elif (pg.time.get_ticks() - self.transition_timer) < 655:
             self.image = frames[2]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 720:
+        elif (pg.time.get_ticks() - self.transition_timer) < 720:
             self.image = frames[1]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 785:
+        elif (pg.time.get_ticks() - self.transition_timer) < 785:
             self.image = frames[2]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 850:
+        elif (pg.time.get_ticks() - self.transition_timer) < 850:
             self.image = frames[1]
             self.hurt_invincible_check()
             self.adjust_rect()
-        elif (self.current_time - self.transition_timer) < 915:
+        elif (pg.time.get_ticks() - self.transition_timer) < 915:
             self.image = frames[2]
             self.adjust_rect()
             self.in_transition_state = False
@@ -860,21 +898,21 @@ class Mario(pg.sprite.Sprite):
         self.y_vel = 0
 
         if self.flag_pole_timer == 0:
-            self.flag_pole_timer = self.current_time
+            self.flag_pole_timer = pg.time.get_ticks()
         elif self.rect.bottom < 493:
-            if (self.current_time - self.flag_pole_timer) < 65:
+            if (pg.time.get_ticks() - self.flag_pole_timer) < 65:
                 self.image = self.right_frames[9]
-            elif (self.current_time - self.flag_pole_timer) < 130:
+            elif (pg.time.get_ticks() - self.flag_pole_timer) < 130:
                 self.image = self.right_frames[10]
-            elif (self.current_time - self.flag_pole_timer) >= 130:
-                self.flag_pole_timer = self.current_time
+            elif (pg.time.get_ticks() - self.flag_pole_timer) >= 130:
+                self.flag_pole_timer = pg.time.get_ticks()
 
             self.rect.right = self.flag_pole_right
             self.y_vel = 5
             self.rect.y += self.y_vel
 
             if self.rect.bottom >= 488:
-                self.flag_pole_timer = self.current_time
+                self.flag_pole_timer = pg.time.get_ticks()
 
         elif self.rect.bottom >= 493:
             self.image = self.right_frames[10]
@@ -882,9 +920,9 @@ class Mario(pg.sprite.Sprite):
     def sitting_at_bottom_of_pole(self):
         """State when mario is at the bottom of the flag pole"""
         if self.flag_pole_timer == 0:
-            self.flag_pole_timer = self.current_time
+            self.flag_pole_timer = pg.time.get_ticks()
             self.image = self.left_frames[10]
-        elif (self.current_time - self.flag_pole_timer) < 210:
+        elif (pg.time.get_ticks() - self.flag_pole_timer) < 210:
             self.image = self.left_frames[10]
         else:
             self.in_transition_state = False
@@ -912,16 +950,16 @@ class Mario(pg.sprite.Sprite):
         if self.x_vel < self.max_x_vel:
             self.x_vel += self.x_accel
 
-        if (self.walking_timer == 0 or (self.current_time - self.walking_timer) > 200):
-            self.walking_timer = self.current_time
+        if (self.walking_timer == 0 or (pg.time.get_ticks() - self.walking_timer) > 200):
+            self.walking_timer = pg.time.get_ticks()
 
-        elif (self.current_time - self.walking_timer) > \
+        elif (pg.time.get_ticks() - self.walking_timer) > \
                 self.calculate_animation_speed():
             if self.frame_index < 3:
                 self.frame_index += 1
             else:
                 self.frame_index = 1
-            self.walking_timer = self.current_time
+            self.walking_timer = pg.time.get_ticks()
 
     def falling_at_end_of_level(self, *args):
         """State when Mario is falling from the flag pole base"""
@@ -937,10 +975,10 @@ class Mario(pg.sprite.Sprite):
 
     def check_if_invincible(self):
         if self.invincible:
-            if ((self.current_time - self.invincible_start_timer) < 10000):
+            if ((pg.time.get_ticks() - self.invincible_start_timer) < 10000):
                 self.losing_invincibility = False
                 self.change_frame_list(30)
-            elif ((self.current_time - self.invincible_start_timer) < 12000):
+            elif ((pg.time.get_ticks() - self.invincible_start_timer) < 12000):
                 self.losing_invincibility = True
                 self.change_frame_list(100)
             else:
@@ -955,7 +993,7 @@ class Mario(pg.sprite.Sprite):
                 self.left_frames = self.invincible_small_frames_list[0][1]
 
     def change_frame_list(self, frame_switch_speed):
-        if (self.current_time - self.invincible_animation_timer) > frame_switch_speed:
+        if (pg.time.get_ticks() - self.invincible_animation_timer) > frame_switch_speed:
             if self.invincible_index < (len(self.invincible_small_frames_list) - 1):
                 self.invincible_index += 1
             else:
@@ -969,7 +1007,7 @@ class Mario(pg.sprite.Sprite):
             self.right_frames = frames[0]
             self.left_frames = frames[1]
 
-            self.invincible_animation_timer = self.current_time
+            self.invincible_animation_timer = pg.time.get_ticks()
 
 
     def check_if_fire(self):
@@ -982,8 +1020,8 @@ class Mario(pg.sprite.Sprite):
         """Check if Mario is still temporarily invincible after getting hurt"""
         if self.hurt_invincible and self.state != c.BIG_TO_SMALL:
             if self.hurt_invisible_timer2 == 0:
-                self.hurt_invisible_timer2 = self.current_time
-            elif (self.current_time - self.hurt_invisible_timer2) < 2000:
+                self.hurt_invisible_timer2 = pg.time.get_ticks()
+            elif (pg.time.get_ticks() - self.hurt_invisible_timer2) < 2000:
                 self.hurt_invincible_check()
             else:
                 self.hurt_invincible = False
@@ -997,12 +1035,12 @@ class Mario(pg.sprite.Sprite):
     def hurt_invincible_check(self):
         """Makes Mario invincible on a fixed interval"""
         if self.hurt_invisible_timer == 0:
-            self.hurt_invisible_timer = self.current_time
-        elif (self.current_time - self.hurt_invisible_timer) < 35:
+            self.hurt_invisible_timer = pg.time.get_ticks()
+        elif (pg.time.get_ticks() - self.hurt_invisible_timer) < 35:
             self.image.set_alpha(0)
-        elif (self.current_time - self.hurt_invisible_timer) < 70:
+        elif (pg.time.get_ticks() - self.hurt_invisible_timer) < 70:
             self.image.set_alpha(255)
-            self.hurt_invisible_timer = self.current_time
+            self.hurt_invisible_timer = pg.time.get_ticks()
 
 
     def check_if_crouching(self):

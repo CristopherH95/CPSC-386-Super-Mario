@@ -4,6 +4,7 @@ from block import Block, CoinBlock, QuestionBlock
 from pipe import Pipe
 from coin import Coin
 from maps import load_world_map
+from mario import Mario
 import pygame
 
 
@@ -59,7 +60,7 @@ class Game:
             'down': False
         }
         # action map for event loop
-        self.action_map = {pygame.KEYDOWN: self.set_cam_move, pygame.KEYUP: self.unset_cam_move}
+        # self.action_map = {pygame.KEYDOWN: self.set_cam_move, pygame.KEYUP: self.unset_cam_move}
         self.paused = False
         print(self.map_layer.view_rect.center)
 
@@ -167,7 +168,7 @@ class Game:
                 self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
             self.game_objects['blocks'].update()
             self.map_group.center(self.map_center)
-            self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
+            self.test.update(pygame.key.get_pressed())  # update and check if not touching any walls
             self.game_objects['q_blocks'].update()
             self.game_objects['items'].update()
             self.game_objects['coins'].update()
@@ -176,7 +177,7 @@ class Game:
 
     def run(self):
         """Launch the game and begin checking for events"""
-        loop = EventLoop(loop_running=True, actions=self.action_map)
+        loop = EventLoop(loop_running=True)
 
         while True:
             self.clock.tick(60)     # 60 fps cap
