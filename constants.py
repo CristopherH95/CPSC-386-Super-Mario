@@ -1,9 +1,9 @@
 SIZE_MULTIPLIER = 2.5
-BLACK = (  0,   0,   0)
+BLACK = (0, 0, 0)
 CURRENT_TIME = 'current time'
+SCORE = 0  # in case i needed to keep score
 
-
-#MARIO FORCES
+# MARIO FORCES
 WALK_ACCEL = .15
 RUN_ACCEL = 20
 SMALL_TURNAROUND = .35
@@ -17,8 +17,7 @@ MAX_Y_VEL = 11
 MAX_RUN_SPEED = 800
 MAX_WALK_SPEED = 6
 
-
-#Mario States
+# Mario States
 
 STAND = 'standing'
 WALK = 'walk'
@@ -33,23 +32,52 @@ END_OF_LEVEL_FALL = 'end of level fall'
 DEATH_JUMP = 'death jump'
 MARIO_DEAD = 'mario dead'
 
-#FLAG STATE
+# FLAG STATE
 TOP_OF_POLE = 'top of pole'
 SLIDE_DOWN = 'slide down'
 BOTTOM_OF_POLE = 'bottom of pole'
 
-#FIRE STATES
+# FIRE STATES
 
 FIREBALL = 'fireball'
 FLYING = 'flying'
 BOUNCING = 'bouncing'
 EXPLODING = 'exploding'
 
-
-#SOUND STATES
+# SOUND STATES
 NORMAL = 'normal'
 STAGE_CLEAR = 'stage clear'
 WORLD_CLEAR = 'world clear'
 TIME_WARNING = 'time warning'
 SPED_UP_NORMAL = 'sped up normal'
 MARIO_INVINCIBLE = 'mario invincible'
+
+# GOOMBA Stuff
+
+LEFT = 'left'
+RIGHT = 'right'
+JUMPED_ON = 'jumped on'
+
+# KOOPA STUFF
+
+SHELL_SLIDE = 'shell slide'
+
+# Brick and coin box contents
+
+MUSHROOM = 'mushroom'
+STAR = 'star'
+FIREFLOWER = 'fireflower'
+COIN = 'coin'
+
+#BRICK STATES
+
+RESTING = 'resting'
+BUMPED = 'bumped'
+
+#COIN STATES
+OPENED = 'opened'
+
+#LIST of ENEMIES
+
+GOOMBA = 'goomba'
+KOOPA = 'koopa'
