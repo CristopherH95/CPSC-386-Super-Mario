@@ -7,6 +7,11 @@ from pygame import time
 
 class Item(Sprite):
     """Represents a generic item object in the mario game"""
+    MUSHROOM = 'mushroom'
+    ONE_UP = '1-up'
+    FIRE_FLOWER = 'fire-flower'
+    STARMAN = 'starman'
+
     def __init__(self, x, y, image, speed, obstacles, floor, item_type, rise_from=None, animated=False):
         super(Item, self).__init__()
         if animated:
@@ -36,9 +41,9 @@ class Item(Sprite):
     def jump(self):
         """Have the item jump into the air"""
         if self.speed >= 0:
-            self.jump_speed = -self.speed
+            self.jump_speed = -(self.speed * 5)
         else:
-            self.jump_speed = self.speed
+            self.jump_speed = (self.speed * 5)
 
     def flip_direction(self):
         """Flip the direction the item is moving on the x-axis"""
@@ -67,6 +72,7 @@ class Item(Sprite):
         """If the item is not supported by any floor rects, then fall down"""
         falling = True
         for rect in self.floor:
+            # check if bottom is at the top of the floor rect and that the x pos is within floor area
             if self.rect.bottom == rect.top and (rect.left < self.rect.center[0] < rect.right):
                 self.rect.bottom = rect.top
                 falling = False
@@ -103,27 +109,38 @@ class Mushroom(Item):
     def __init__(self, x, y, obstacles, floor, rise_from=None):
         image = pygimg.load('map/mushroom.png')
         speed = 2
-        super(Mushroom, self).__init__(x, y, image, speed, obstacles, floor, rise_from)
+        super(Mushroom, self).__init__(x, y, image, speed, obstacles, floor,
+                                       Item.MUSHROOM, rise_from, animated=False)
+
+
+class OneUp(Item):
+    """A special mushroom which is meant to add an extra life on pickup"""
+    def __init__(self, x, y, obstacles, floor, rise_from=None):
+        image = pygimg.load('map/mushroom-1-up.png')
+        speed = 2
+        super(OneUp, self).__init__(x, y, image, speed, obstacles, floor,
+                                    Item.ONE_UP, rise_from, animated=False)
 
 
 class FireFlower(Item):
     """A fire flower item which can be picked up by Mario, giving the ability to throw fire balls"""
     def __init__(self, x, y, obstacles, floor, rise_from=None):
-        images = [pygimg.load('fire-flower-1.png'), pygimg.load('fire-flower-2.png'),
-                  pygimg.load('fire-flower-3.png'), pygimg.load('fire-flower-4.png')]
+        images = [pygimg.load('map/fire-flower-1.png'), pygimg.load('map/fire-flower-2.png'),
+                  pygimg.load('map/fire-flower-3.png'), pygimg.load('map/fire-flower-4.png')]
         speed = 0
-        super(FireFlower, self).__init__(x, y, images, speed, obstacles, floor, rise_from, True)
+        super(FireFlower, self).__init__(x, y, images, speed, obstacles,
+                                         floor, Item.FIRE_FLOWER, rise_from, True)
 
 
 class StarMan(Item):
     """A 'star-man' item which can be picked up by Mario, causing invincibility"""
     def __init__(self, x, y, obstacles, floor, rise_from=None):
-        images = [pygimg.load('starman-1.png'), pygimg.load('starman-2.png'),
-                  pygimg.load('starman-3.png'), pygimg.load('starman-4.png')]
+        images = [pygimg.load('map/starman-1.png'), pygimg.load('map/starman-2.png'),
+                  pygimg.load('map/starman-3.png'), pygimg.load('map/starman-4.png')]
         speed = 2
         self.last_jump = time.get_ticks()
         self.jump_interval = 1000   # jump around every second
-        super(StarMan, self).__init__(x, y, images, speed, obstacles, floor, rise_from, True)
+        super(StarMan, self).__init__(x, y, images, speed, obstacles, floor, Item.STARMAN, rise_from, True)
 
     def update(self):
         touch_floor = False
@@ -135,9 +152,9 @@ class StarMan(Item):
         if abs(self.last_jump - time.get_ticks()) > self.jump_interval and touch_floor:
             self.jump()
             self.last_jump = time.get_ticks()
+        super(StarMan, self).update()
 
 
-# TODO: Fireball controller
 class FireBall(Sprite):
     """A fireball which can be thrown from Mario when he is in his fire flower state"""
     def __init__(self, x, y, norm_images, explode_images, obstacles, floor, speed=5):
@@ -181,6 +198,7 @@ class FireBall(Sprite):
                 break
         if not bounce:
             for flr_rect in self.floor:
+                # check if bottom is at the top of the floor rect and that the x pos is within floor area
                 if self.rect.bottom >= flr_rect.top and (flr_rect.left < self.rect.center[0] < flr_rect.right):
                     bounce = True
                     break
@@ -221,8 +239,19 @@ class FireBallController:
     def throw_fireball(self):
         """If there are not two fireballs already active, then throw a new fireball"""
         if len(self.fireballs) < 2:
-            pass    # TODO: throw fireball based on direction Mario is facing
+            if self.origin.facing_right:
+                n_fireball = FireBall(self.origin.rect.x + 1, self.origin.rect.topright, self.fb_images,
+                                      self.exp_images, self.obstacles, self.floor)
+            else:
+                n_fireball = FireBall(self.origin.rect.x - 1, self.origin.rect.topleft, self.fb_images, self.exp_images,
+                                      self.obstacles, self.floor, speed=-5)
+            self.fireballs.add(n_fireball)
+            self.map_group.add(n_fireball)
 
     def update_fireballs(self):
         """Update all fireballs currently in play"""
         self.fireballs.update()
+        for fb in self.fireballs:
+            if fb.rect.x < 0 or fb.rect.x > self.screen.get_width() or \
+                    (fb.rect.y < 0 or fb.rect.y > self.screen.get_height()):
+                fb.kill()

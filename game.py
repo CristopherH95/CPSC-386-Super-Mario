@@ -6,6 +6,7 @@ from coin import Coin
 from maps import load_world_map
 from mario import Mario
 from enemy import Goomba
+from title import Menu
 import pygame
 
 
@@ -43,12 +44,16 @@ class Game:
                        int(config['screen_settings']['height']))
         self.screen = pygame.display.set_mode(screen_size)
         pygame.display.set_caption(config['game_settings']['title'])
-        self.tmx_data, self.map_layer, self.map_group = load_world_map('map/world1.tmx', self.screen)
         self.clock = pygame.time.Clock()    # clock for limiting fps
-        self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         self.game_objects = None
         self.goomba = None
-        self.init_game_objects()
+        self.tmx_data = None
+        self.map_layer = None
+        self.map_group = None
+        self.player_spawn = None
+        self.map_center = None
+        self.test = None
+        self.init_world_1()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
         self.test = Mario(self.game_objects['blocks'], self.game_objects['q_blocks'], self.game_objects['coins'],
                           self.game_objects['pipes'], self.game_objects['goomba'],
@@ -62,6 +67,11 @@ class Game:
         self.map_group.add(self.test)   # add test sprite to map group
         self.paused = False
         # print(self.map_layer.view_rect.center)
+        # action map for event loop
+        self.paused = False
+        self.game_active = False
+        self.menu = Menu(self.screen)
+        print(self.map_layer.view_rect.center)
 
     def retrieve_map_data(self, data_layer_name):
         """Retrieve map data if it exists in the game's current map, otherwise return an empty list"""
@@ -70,6 +80,17 @@ class Game:
         except ValueError:
             data = []
         return data
+
+    def init_world_1(self):
+        """Load the initial world for the game"""
+        self.tmx_data, self.map_layer, self.map_group = load_world_map('map/world1.tmx', self.screen)
+        self.player_spawn = self.tmx_data.get_object_by_name('player')  # get player spawn object from map data
+        self.init_game_objects()
+        self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
+        self.test = TestSprite(self.map_center)  # test sprite for player location
+        self.map_layer.center(self.map_center)  # center camera
+        self.map_layer.zoom = 0.725  # camera zoom
+        self.map_group.add(self.test)  # add test sprite to map group
 
     def init_game_objects(self):
         """Create all game objects in memory by extracting them from the map file"""
@@ -156,13 +177,29 @@ class Game:
             self.game_objects['coins'].update()
             self.game_objects['goomba'].update()
         self.map_group.draw(self.screen)
+        if not self.game_active:
+            self.menu.blit()
         pygame.display.flip()
 
     def run(self):
+        """Run the application loop so that the menu can be displayed and the game started"""
+        loop = EventLoop(loop_running=True, actions=self.menu.action_map)
+
+        while True:
+            loop.check_events()
+            self.update()
+            if self.menu.start:
+                self.game_active = True
+                self.start_game()
+                self.menu.start = False
+                self.game_active = False
+                self.init_world_1()
+
+    def start_game(self):
         """Launch the game and begin checking for events"""
         loop = EventLoop(loop_running=True)
 
-        while True:
+        while loop.loop_running:
             self.clock.tick(60)     # 60 fps cap
             loop.check_events()
             self.update()
