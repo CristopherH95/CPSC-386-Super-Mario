@@ -6,7 +6,7 @@ class Logo(sprite.Sprite):
     """Represents the logo shown at the menu screen"""
     def __init__(self, screen):
         self.screen = screen
-        self.image = image.load('map/Super_Mario_Bros_Logo.png')
+        self.image = image.load('map/Super-Mario-Logo.png')
         self.rect = self.image.get_rect()
         self.position()
         super(Logo, self).__init__()
