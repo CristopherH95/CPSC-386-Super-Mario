@@ -10,7 +10,9 @@ keybinding = {
 }
 
 class Control(object):
-    """Control class, Contains the event_loop which passes events to States as needed."""
+    """Control class for entire project. Contains the game loop, and contains
+    the event_loop which passes events to States as needed. Logic for flipping
+    states is also found here."""
     def __init__(self, caption):
         self.screen = pg.display.get_surface()
         self.done = False
@@ -62,6 +64,20 @@ class Control(object):
             self.show_fps = not self.show_fps
             if not self.show_fps:
                 pg.display.set_caption(self.caption)
+
+
+    # def main(self):
+    #     """Main loop for entire program"""
+    #     while not self.done:
+    #         self.event_loop()
+    #         self.update()
+    #         pg.display.update()
+    #         self.clock.tick(self.fps)
+    #         if self.show_fps:
+    #             fps = self.clock.get_fps()
+    #             with_fps = "{} - {:.2f} FPS".format(self.caption, fps)
+    #             pg.display.set_caption(with_fps)
+
 
 class _State(object):
     def __init__(self):
