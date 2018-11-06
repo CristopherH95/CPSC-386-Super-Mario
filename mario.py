@@ -25,6 +25,8 @@ class Mario(pg.sprite.Sprite):
         self.map_layer = map_layer
         self.screen = screen
         self.screen_rect = self.screen.get_rect()
+        self.screen_shift = 0
+        self.left_bound = 0
 
         self.shell = pg.sprite.Group()
 
@@ -349,8 +351,11 @@ class Mario(pg.sprite.Sprite):
         self.check_for_special_state()
         self.animation()
         self.check_fall()
-        if self.rect.centerx > int(self.screen_rect.right * 0.5):
+        if self.rect.right > self.screen_shift:
+            self.screen_shift = self.rect.right + 1
+            self.left_bound = self.rect.right - int(self.screen_rect.width * 0.45)
             self.map_layer.center((self.rect.centerx, self.rect.centery))
+
 
     def check_fall(self):
         """Check if falling, apply gravity if so"""
@@ -580,7 +585,14 @@ class Mario(pg.sprite.Sprite):
                 else:
                     self.x_vel = 0
                     self.state = c.STAND
-        self.rect.x += self.x_vel * 2   # added moving
+        if not self.check_left_side():
+            self.rect.x += self.x_vel * 2   # added moving
+        else:
+            self.rect.x += 1
+
+    def check_left_side(self):
+        """Check if Mario is toward the left side of the screen"""
+        return self.rect.left <= self.left_bound
 
     def calculate_animation_speed(self):
         """Used to make walking animation speed be in relation to
@@ -605,7 +617,10 @@ class Mario(pg.sprite.Sprite):
         # if 0 <= self.y_vel < self.max_y_vel:
         #     self.gravity = c.GRAVITY
         #     self.state = c.FALL
-        self.rect.x += self.x_vel * 2
+        if not self.check_left_side():
+            self.rect.x += self.x_vel * 2
+        else:
+            self.rect.x += 1
 
         if keys[tools.keybinding['left']]:
             if self.x_vel > (self.max_x_vel * - 1):

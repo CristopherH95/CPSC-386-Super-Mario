@@ -87,10 +87,6 @@ class Game:
         self.player_spawn = self.tmx_data.get_object_by_name('player')  # get player spawn object from map data
         self.init_game_objects()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
-        self.test = TestSprite(self.map_center)  # test sprite for player location
-        self.map_layer.center(self.map_center)  # center camera
-        self.map_layer.zoom = 0.725  # camera zoom
-        self.map_group.add(self.test)  # add test sprite to map group
 
     def init_game_objects(self):
         """Create all game objects in memory by extracting them from the map file"""
@@ -169,7 +165,7 @@ class Game:
 
     def update(self):
         """Update the screen and any objects that require individual updates"""
-        if not self.paused:
+        if not self.paused and self.game_active:
             self.game_objects['blocks'].update()
             self.test.update(pygame.key.get_pressed())  # update and check if not touching any walls
             self.game_objects['q_blocks'].update()
