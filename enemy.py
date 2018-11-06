@@ -4,10 +4,11 @@ from pygame.sprite import Sprite
 
 
 class Enemy(Sprite):
-    ENEMY_SIZE = 32
-    ENEMY_SPEED = 1
+    ENEMY_DIRECTION = 1
+    ENEMY_GRAVITY = 10
+    ENEMY_SPEED = 4
 
-    def __init__(self, screen, settings, image, x, y, player, map_block, block, goombas, koopas):
+    def __init__(self, screen, settings, image, x, y, player, floor, block, goombas, koopas):
         super().__init__()
         self.screen = screen
         self.screen_rect = self.screen.get_rect()
@@ -17,15 +18,17 @@ class Enemy(Sprite):
         self.x, self.y = x, y
         self.rect.left, self.rect.top = self.x, self.y
         self.player = player
-        self.map_block = map_block
+        self.floor = floor
         self.block = block
         self.goombas = goombas
         self.koopas = koopas
         self.death_animation_frame = 0
         self.last_frame = 0
 
-        # self.SIZE = Enemy.ENEMY_SIZE
-        self.ENEMY_DIRECTION = Enemy.ENEMY_SPEED * -1
+        """CHANGE TO -1 TO START LEFT"""
+        self.ENEMY_DIRECTION = Enemy.ENEMY_DIRECTION
+        self.ENEMY_SPEED = Enemy.ENEMY_SPEED
+        self.ENEMY_GRAVITY = Enemy.ENEMY_GRAVITY
 
         # Collision flags
         self.enemy_player_collide_flag = False
@@ -37,15 +40,20 @@ class Enemy(Sprite):
         self.shell_mode = False
         self.shell_enemy_kill = False
 
+        self.dead = False
+        self.stop = False
+
     def check_collisions(self):
         # If flag is set already, no need to check collisions again
         # Also might stops from getting multiple flags set off
-        if self.enemy_player_collide_flag or self.enemy_block_collide_flag or self.enemy_goomba_collide_flag or\
-                self.enemy_koopa_collide_flag:
-            return True
-
-        # Check collisions
-        if self.check_player_collision() or self.check_block_collision() or self.check_friendly_collision():
+        # if self.enemy_player_collide_flag or self.enemy_block_collide_flag or self.enemy_goomba_collide_flag or\
+        #         self.enemy_koopa_collide_flag:
+        #     return True
+        #
+        # # Check collisions
+        # if self.check_player_collision() or self.check_block_collision() or self.check_friendly_collision():
+        #     return True
+        if self.check_block_collision():
             return True
 
     def check_player_collision(self):
@@ -60,26 +68,26 @@ class Enemy(Sprite):
 
     def check_block_collision(self):
         # Check if colliding with map (i.e pipe) or dying from block
-        for block_rect in self.block:
-            if self.rect.left == block_rect.rect.right:
-                self.enemy_block_collide_flag = True
-                return True
-            if self.rect.right == block_rect.rect.left:
-                self.enemy_block_collide_flag = True
-                return True
-            if self.rect.contains(block_rect.rect):
-                self.enemy_block_collide_flag = True
-                self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
-                self.block_enemy_kill = True
-                return True
+        if pygame.sprite.spritecollideany(self, self.block):
+            self.enemy_block_collide_flag = True
+            self.ENEMY_DIRECTION *= -1
+            return True
+        """NEED TO CHECK FOR IF MARIO HITS BLOCK KILLING ENEMY"""
+        #     if self.rect.contains(block_rect.rect):
+        #         self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
+        #         self.enemy_block_collide_flag = True
+        #         self.block_enemy_kill = True
+        #         return True
 
     def check_friendly_collision(self):
         # Check for collisions with friendly or koopa shell
         for goomba_rect in self.goombas:
             if self.rect.colliderect(goomba_rect.rect):
+                self.ENEMY_DIRECTION *= -1
                 self.enemy_goomba_collide_flag = True
                 return True
         if self.rect.colliderect(self.koopas.rect) and not self.koopas.shell_movement:
+            self.ENEMY_DIRECTION *= -1
             self.enemy_koopa_collide_flag = True
             return True
         if self.rect.colliderect(self.koopas.rect) and self.koopas.shell_movement:
@@ -87,11 +95,16 @@ class Enemy(Sprite):
             self.enemy_koopa_collide_flag = True
             return True
 
-    def check_pit(self):
-        # Returns true if at least one block is touching enemy
-        for block_rect in self.block:
-            if block_rect.rect.top == self.rect.bottom:
+    def check_floor(self):
+        # Returns true if at enemy on floor
+        for floor_rect in self.floor:
+            if self.rect.colliderect(floor_rect):
                 return True
+
+    def check_boundary(self):
+        if self.rect.right <= (self.player.rect.x - (self.screen_rect.left/2)) or \
+                self.rect.top <= self.screen_rect.bottom:
+            return True
 
     def reset_parameters(self):
         self.enemy_player_collide_flag = False
@@ -102,6 +115,11 @@ class Enemy(Sprite):
         self.block_enemy_kill = False
         self.shell_mode = True
         self.shell_enemy_kill = False
+        self.dead = False
+        self.stop = False
+        self.ENEMY_DIRECTION = Enemy.ENEMY_DIRECTION
+        self.ENEMY_SPEED = Enemy.ENEMY_SPEED
+        self.ENEMY_GRAVITY = Enemy.ENEMY_GRAVITY
         self.rect.left, self.rect.top = self.x, self.y
 
     def blit(self):
@@ -109,29 +127,36 @@ class Enemy(Sprite):
 
 
 class Goomba(Enemy):
-    def __init__(self, screen, settings, x, y, player, map_block, block, goombas, koopas):
-        self.walk_images = ['images/enemies/GoombaLeftBoot.png',
-                            'images/enemies/GoombaRightBoot.png']
-        self.upside_down_images = ['images/enemies/GoombaUD1.png',
-                                   'images/enemies/GoombaUD2.png']
-        self.crushed_images = ['images/enemies/GoombaCrushed.png']
+    def __init__(self, screen, settings, x, y, player, floor, block, goombas, koopas):
+        self.walk_images = ['images/enemies/goomba/GoombaLeftBoot.png',
+                            'images/enemies/goomba/GoombaRightBoot.png']
+        self.upside_down_images = ['images/enemies/goomba/GoombaUD1.png',
+                                   'images/enemies/goomba/GoombaUD2.png']
+        self.crushed_images = ['images/enemies/goomba/GoombaCrushed.png']
         self.animator = Animator(self.walk_images)
         image = self.animator.get_image()
-        super().__init__(screen, settings, image, x, y, player, map_block, block, goombas, koopas)
+        super().__init__(screen, settings, image, x, y, player, floor, block, goombas, koopas)
 
     def goomba_update(self):
+        # INSERT A WAY TO STOP MOVEMENT WHEN OFF SCREEN (CHECK BOUNDARY)
         self.goomba_physics()
         self.image = self.animator.get_image()
 
     def goomba_physics(self):
-        # If no blocks are touching enemy -> Fall Down Pit
-        if not self.check_pit():
-            self.reset_parameters()
-            self.rect.y += abs(self.ENEMY_DIRECTION)
+        """USE MARIO CURRENT POSITION TO GET LEFT OF SCREEN"""
+        # if self.check_boundary():
+        #     self.kill()
+        if self.rect.right <= self.screen_rect.left or self.rect.top <= self.screen_rect.bottom:
+            print("Dead")
+            self.kill()
 
-        # If no collision -> movement
-        if not self.check_collisions():
-            self.rect.x += self.ENEMY_DIRECTION
+        # If no blocks are touching enemy -> Fall Down Pit
+        if not self.check_floor() and not self.stop:
+            self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_GRAVITY)
+
+        # if not self.check_collisions():
+        if self.check_floor() and not self.stop:
+            self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
 
         # If collision
         if self.check_collisions():
@@ -142,47 +167,41 @@ class Goomba(Enemy):
                     time = pygame.time.get_ticks()
                     # Animate and keep on screen for half a second before killing sprite
                     self.animator = Animator(self.crushed_images)
+                    self.stop = True
                     if abs(self.last_frame - time) > 500:
-                        self.death_animation_frame = 0
                         self.kill()
                 # Player killed so stop but animate
                 else:
+                    self.stop = True
                     self.rect.x += 0
             # Collision with map or block
             elif self.enemy_block_collide_flag:
                 # Killed by player hitting block
                 if self.block_enemy_kill:
                     time = pygame.time.get_ticks()
+                    self.stop = True
                     # Animate getting hit by block (Go up for two seconds)
+                    self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_SPEED)
                     # After two seconds fall down while upside down
-                    self.rect.y += self.ENEMY_DIRECTION
                     if self.death_animation_frame == 0 and abs(self.last_frame - time) > 2000:
                         self.animator = Animator(self.upside_down_images)
-                        self.ENEMY_DIRECTION *= -1
                         self.death_animation_frame += 1
+                        self.ENEMY_DIRECTION *= -1
+                    """MIGHT BE REDUNDANT WITH CHECK BOUNDARY"""
                     # Kill off after 10 seconds (Enough to be off screen)
                     if abs(self.last_frame - time) > 10000:
                         self.death_animation_frame = 0
                         self.kill()
                 # If colliding with map (i.e. Pipe) change direction
-                if not self.block_enemy_kill:
-                    self.ENEMY_DIRECTION *= -1
-                    self.rect.x += self.ENEMY_DIRECTION
+                else:
+                    self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
                     self.enemy_block_collide_flag = False
-
             # If colliding with goomba change direction
             elif self.enemy_goomba_collide_flag:
-                self.ENEMY_DIRECTION *= -1
-                self.rect.x += self.ENEMY_DIRECTION
+                self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
                 self.enemy_goomba_collide_flag = False
-
             # If colliding with koopa
             elif self.enemy_koopa_collide_flag:
-                # Colliding with koopa enemy
-                if not self.shell_enemy_kill:
-                    self.ENEMY_DIRECTION *= -1
-                    self.rect.x += self.ENEMY_DIRECTION
-                    self.enemy_koopa_collide_flag = False
                 # Colliding with koopa shell
                 if self.shell_enemy_kill:
                     # Change to upside down images and fall down
@@ -190,25 +209,30 @@ class Goomba(Enemy):
                     if self.death_animation_frame == 0:
                         self.animator = Animator(self.upside_down_images)
                         self.death_animation_frame += 1
-                    self.rect.y += abs(self.ENEMY_DIRECTION)
+                    self.rect.y += abs(self.ENEMY_DIRECTION * self.ENEMY_SPEED)
                     # Kill off after 10 seconds (Enough to be off screen)
+                    """MIGHT BE REDUNDANT ^ CHECKS AT TOP"""
                     if abs(self.last_frame - time) > 10000:
                         self.death_animation_frame = 0
                         self.kill()
+                # Colliding with koopa enemy
+                else:
+                    self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
+                    self.enemy_koopa_collide_flag = False
 
 
 class Koopa(Enemy):
-    def __init__(self, screen, settings, x, y, player, map_block, block, goombas, koopas):
-        self.left_images = ['images/enemies/KoopaWalkLeft1.png',
-                            'images/enemies/KoopaWalkLeft2.png']
-        self.right_images = ['images/enemies/KoopaWalkRight1.png',
-                             'images/enemies/KoopaWalkRight2.png']
-        self.death_images = ['images/enemies/KoopaShell.png']
-        self.UD_death_images = ['images/enemies/KoopaShellUD.png']
-        self.feet_images = ['images/enemies/KoopaLegs.png']
+    def __init__(self, screen, settings, x, y, player, floor, block, goombas, koopas):
+        self.left_images = ['images/enemies/koopa/KoopaWalkLeft1.png',
+                            'images/enemies/koopa/KoopaWalkLeft2.png']
+        self.right_images = ['images/enemies/koopa/KoopaWalkRight1.png',
+                             'images/enemies/koopa/KoopaWalkRight2.png']
+        self.death_images = ['images/enemies/koopa/KoopaShell.png']
+        self.UD_death_images = ['images/enemies/koopa/KoopaShellUD.png']
+        self.feet_images = ['images/enemies/koopa/KoopaLegs.png']
         self.animator = Animator(self.left_images)
         image = self.animator.get_image()
-        super().__init__(screen, settings, image, x, y, player, map_block, block, goombas, koopas)
+        super().__init__(screen, settings, image, x, y, player, floor, block, goombas, koopas)
 
         self.shell_movement = False
         self.collision_flag = False
@@ -229,14 +253,20 @@ class Koopa(Enemy):
             return True
 
     def koopa_physics(self):
-        # If no blocks are touching enemy -> Fall Down Pit
-        if not self.check_pit():
-            self.reset_parameters()
-            self.rect.y += abs(self.ENEMY_DIRECTION)
+        """USE MARIO CURRENT POSITION TO GET LEFT OF SCREEN"""
+        # if self.check_boundary():
+        #     self.kill()
+        if self.rect.right <= self.screen_rect.left or self.rect.top <= self.screen_rect.bottom:
+            print("Dead")
+            self.kill()
 
-        # If no collision -> movement
-        if not self.check_collisions():
-            self.rect.x += self.ENEMY_DIRECTION
+        # If no blocks are touching enemy -> Fall Down Pit
+        if not self.check_floor() and not self.stop:
+            self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_GRAVITY)
+
+        # if not self.check_collisions():
+        if self.check_floor() and not self.stop:
+            self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
 
         # If collision
         if self.check_collisions():
@@ -276,7 +306,8 @@ class Koopa(Enemy):
                     # Kill off after 10 seconds (Enough to be off screen)
                     if abs(self.last_frame - time) > 10000:
                         self.death_animation_frame = 0
-                        self.kill()
+                        # self.kill()
+                        self.stop = True
                 # If colliding with map (i.e. Pipe) change direction
                 if not self.block_enemy_kill:
                     self.ENEMY_DIRECTION *= -1
@@ -307,4 +338,5 @@ class Koopa(Enemy):
                     # Kill off after 10 seconds (Enough to be off screen)
                     if abs(self.last_frame - time) > 10000:
                         self.death_animation_frame = 0
-                        self.kill()
+                        # self.kill()
+                        self.stop = True
