@@ -5,6 +5,7 @@ from pipe import Pipe
 from coin import Coin
 from maps import load_world_map
 from mario import Mario
+from enemy import Goomba
 import pygame
 
 
@@ -21,6 +22,8 @@ class TestSprite(pygame.sprite.Sprite):
         self.rect.left, self.rect.top = pos[0], pos[1]
 
     def update(self, walls):
+        print(str(self.rect.x))
+        self.rect.x += 3
         touched_wall = False
         for wall in walls:
             if self.rect.colliderect(wall):
@@ -44,6 +47,7 @@ class Game:
         self.clock = pygame.time.Clock()    # clock for limiting fps
         self.player_spawn = self.tmx_data.get_object_by_name('player')      # get player spawn object from map data
         self.game_objects = None
+        self.goomba = None
         self.init_game_objects()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
         self.test = Mario(self.game_objects['blocks'], self.game_objects['q_blocks'], self.game_objects['coins'],
@@ -87,6 +91,7 @@ class Game:
             'collide_objs': pygame.sprite.Group(),  # for checking collisions with all collide-able objects
             'flag': pygame.sprite.Group(),
             'items': pygame.sprite.Group(),
+<<<<<<< HEAD
             'goombas': pygame.sprite.Group(),
             'koopas': pygame.sprite.Group(),
             'win-zone': []
@@ -97,6 +102,17 @@ class Game:
         pipe_data = self.retrieve_map_data('pipes')
         flag_data = self.retrieve_map_data('flag')
         coin_data = self.retrieve_map_data('coins')
+=======
+            'goomba': pygame.sprite.Group(),
+            'win-zone': []
+        }
+        floor_data = self.tmx_data.get_layer_by_name('walls')
+        block_data = self.tmx_data.get_layer_by_name('blocks')
+        q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
+        pipe_data = self.tmx_data.get_layer_by_name('pipes')
+        flag_data = self.tmx_data.get_layer_by_name('flag')
+        enemy_spawn_data = self.tmx_data.get_layer_by_name('spawn-points')
+>>>>>>> origin/alex-branch
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         for block in block_data:
@@ -129,6 +145,13 @@ class Game:
             else:
                 self.game_objects['win-zone'].append(pygame.Rect(flag_part.x, flag_part.y,
                                                                  flag_part.width, flag_part.height))
+        for spawn in enemy_spawn_data:
+            self.goomba = Goomba(self.screen, None, spawn.x, spawn.y, None,
+                                 self.game_objects['floors'], self.game_objects['pipes'],
+                                 self.game_objects['goomba'], None)
+            self.game_objects['goomba'].add(self.goomba)
+            self.map_group.add(self.goomba)
+            self.goomba.rect.y += 23
 
     def set_cam_move(self, event):
         """Set camera movement based on key pressed"""
@@ -163,6 +186,7 @@ class Game:
 
     def update(self):
         """Update the screen and any objects that require individual updates"""
+<<<<<<< HEAD
         if not self.paused:
             if self.move_flags['right']:
                 self.map_center = (self.map_center[0] + self.scroll_speed, self.map_center[1])
@@ -178,6 +202,23 @@ class Game:
             self.game_objects['q_blocks'].update()
             self.game_objects['items'].update()
             self.game_objects['coins'].update()
+=======
+        if self.move_flags['right']:
+            self.map_center = (self.map_center[0] + self.scroll_speed, self.map_center[1])
+        if self.move_flags['left']:
+            self.map_center = (self.map_center[0] - self.scroll_speed, self.map_center[1])
+        if self.move_flags['up']:
+            self.map_center = (self.map_center[0], self.map_center[1] - self.scroll_speed)
+        if self.move_flags['down']:
+            self.map_center = (self.map_center[0], self.map_center[1] + self.scroll_speed)
+        for block in self.game_objects['blocks']:
+            block.update()
+        self.map_group.center(self.map_center)
+        self.test.update(self.game_objects['floors'])  # update and check if not touching any walls
+        self.goomba.goomba_update()
+        self.game_objects['q_blocks'].update()
+        self.game_objects['items'].update()
+>>>>>>> origin/alex-branch
         self.map_group.draw(self.screen)
         pygame.display.flip()
 
