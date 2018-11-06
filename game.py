@@ -46,7 +46,11 @@ class Game:
         self.game_objects = None
         self.init_game_objects()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
-        self.test = Mario()   # test sprite for player location
+        self.test = Mario(self.game_objects['blocks'], self.game_objects['q_blocks'], self.game_objects['coins'],
+                          self.game_objects['pipes'], self.game_objects['goombas'],
+                          self.game_objects['koopas'], self.game_objects['items'],
+                          self.game_objects['collide_objs'], self.game_objects['floors'],
+                          self.map_layer, self.screen)   # test sprite for player location
         self.test.rect.x, self.test.rect.y = self.player_spawn.x, self.player_spawn.y
         self.map_layer.center(self.map_center)   # center camera
         self.map_layer.zoom = 0.725     # camera zoom
@@ -83,6 +87,8 @@ class Game:
             'collide_objs': pygame.sprite.Group(),  # for checking collisions with all collide-able objects
             'flag': pygame.sprite.Group(),
             'items': pygame.sprite.Group(),
+            'goombas': pygame.sprite.Group(),
+            'koopas': pygame.sprite.Group(),
             'win-zone': []
         }
         floor_data = self.retrieve_map_data('walls')
