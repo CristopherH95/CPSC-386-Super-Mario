@@ -343,8 +343,8 @@ class Mario(pg.sprite.Sprite):
 
     def update(self, keys):
         """Updates Mario's states and animations once per frame"""
-        print(self.state)
-        print('x_vel, y_vel: ', self.x_vel, self.y_vel)
+        # print(self.state)
+        # print('x_vel, y_vel: ', self.x_vel, self.y_vel)
         self.handle_state(keys)
         self.check_for_special_state()
         self.animation()

@@ -6,7 +6,7 @@ from pygame.sprite import Sprite
 class Enemy(Sprite):
     ENEMY_DIRECTION = 1
     ENEMY_GRAVITY = 10
-    ENEMY_SPEED = 4
+    ENEMY_SPEED = 2
 
     def __init__(self, screen, settings, image, x, y, player, floor, block, goombas, koopas):
         super().__init__()
@@ -46,13 +46,13 @@ class Enemy(Sprite):
     def check_collisions(self):
         # If flag is set already, no need to check collisions again
         # Also might stops from getting multiple flags set off
-        # if self.enemy_player_collide_flag or self.enemy_block_collide_flag or self.enemy_goomba_collide_flag or\
-        #         self.enemy_koopa_collide_flag:
-        #     return True
-        #
-        # # Check collisions
-        # if self.check_player_collision() or self.check_block_collision() or self.check_friendly_collision():
-        #     return True
+        if self.enemy_player_collide_flag or self.enemy_block_collide_flag or self.enemy_goomba_collide_flag or\
+                self.enemy_koopa_collide_flag:
+            return True
+
+        # Check collisions
+        if self.check_player_collision() or self.check_block_collision() or self.check_friendly_collision():
+            return True
         if self.check_block_collision():
             return True
 
@@ -63,7 +63,7 @@ class Enemy(Sprite):
                 self.player_enemy_kill = True
                 self.last_frame = pygame.time.get_ticks()
                 self.shell_mode = True
-            self.player.enemy_player_collide_flag = True
+            self.player.start_death_jump()
             return True
 
     def check_block_collision(self):
@@ -137,6 +137,9 @@ class Goomba(Enemy):
         image = self.animator.get_image()
         super().__init__(screen, settings, image, x, y, player, floor, block, goombas, koopas)
 
+    def update(self):
+        self.goomba_update()
+
     def goomba_update(self):
         # INSERT A WAY TO STOP MOVEMENT WHEN OFF SCREEN (CHECK BOUNDARY)
         self.goomba_physics()
@@ -146,7 +149,9 @@ class Goomba(Enemy):
         """USE MARIO CURRENT POSITION TO GET LEFT OF SCREEN"""
         # if self.check_boundary():
         #     self.kill()
-        if self.rect.right <= self.screen_rect.left or self.rect.top <= self.screen_rect.bottom:
+        if self.rect.right <= self.screen_rect.left or self.rect.top >= self.screen_rect.bottom:
+            print(self.rect.x, self.rect.y)
+            print(self.screen_rect.left, self.screen_rect.bottom)
             print("Dead")
             self.kill()
 

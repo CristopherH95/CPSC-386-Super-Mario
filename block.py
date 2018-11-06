@@ -29,7 +29,7 @@ class CoinBlock(Block):
     def __init__(self, x, y, initial_image, screen, map_group, coins=0):
         super(CoinBlock, self).__init__(x, y, initial_image, screen)
         self.coin_counter = int(coins)
-        print(self.coin_counter)
+        # print(self.coin_counter)
         self.blank_img = image.load('map/super-mario-empty-block.png') if self.coin_counter > 0 else None
         self.coins = []
         self.map_group = map_group
