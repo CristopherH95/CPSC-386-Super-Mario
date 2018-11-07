@@ -2,9 +2,9 @@ import pygame
 from animate import Animator
 from pygame.sprite import Sprite
 
-ENEMY_DIRECTION = 1
+ENEMY_DIRECTION = -1
 ENEMY_GRAVITY = 10
-ENEMY_SPEED = 3
+ENEMY_SPEED = 2
 
 
 class Enemy(Sprite):
@@ -62,11 +62,12 @@ class Enemy(Sprite):
             self.ENEMY_DIRECTION *= -1
             return True
         """NEED TO CHECK FOR IF MARIO HITS BLOCK KILLING ENEMY"""
-        #     if self.rect.contains(block_rect.rect):
-        #         self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
-        #         self.enemy_block_collide_flag = True
-        #         self.block_enemy_kill = True
-        #         return True
+        for block_rect in self.block:
+            if self.rect.contains(block_rect.rect):
+                self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
+                self.enemy_block_collide_flag = True
+                self.block_enemy_kill = True
+                return True
 
     def check_friendly_collision(self):
         """FIX ENEMY COLLIDING WITH SELF"""
@@ -88,6 +89,10 @@ class Enemy(Sprite):
         # Returns true if at enemy on floor
         for floor_rect in self.floor:
             if self.rect.colliderect(floor_rect):
+                return True
+        for block_rect in self.block:
+            if self.rect.y == (block_rect.rect.y - block_rect.rect.height) and \
+                    block_rect.rect.x < self.rect.x < block_rect.rect.x + block_rect.rect.width:
                 return True
 
     def check_boundary(self):
@@ -155,7 +160,6 @@ class Goomba(Enemy):
 
         # print('Player ' + str(self.check_player_collision()))
         # print('Block ' + str(self.check_block_collision()))
-        """FIX THIS"""
         # print('Enemy' + str(self.check_friendly_collision()))
 
         if self.check_collisions():
@@ -167,8 +171,7 @@ class Goomba(Enemy):
                     # Animate and keep on screen for half a second before killing sprite
                     self.animator = Animator(self.crushed_images)
                     self.stop = True
-                    if abs(self.last_frame - time) > 500:
-                        self.rect.y += self.screen.get_width()
+                    if abs(time - self.last_frame) > 1000:
                         self.dead = True
                 # Player killed so stop but animate
                 else:
