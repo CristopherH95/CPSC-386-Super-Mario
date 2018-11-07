@@ -7,6 +7,7 @@ from maps import load_world_map
 from mario import Mario
 from enemy import Goomba, Koopa
 from title import Menu
+from game_stats import GameStats
 import pygame
 
 
@@ -43,6 +44,7 @@ class Game:
         screen_size = (int(config['screen_settings']['width']),
                        int(config['screen_settings']['height']))
         self.screen = pygame.display.set_mode(screen_size)
+        self.stats = GameStats(self.screen)
         pygame.display.set_caption(config['game_settings']['title'])
         self.clock = pygame.time.Clock()    # clock for limiting fps
         self.game_objects = None
@@ -179,6 +181,10 @@ class Game:
         self.map_group.draw(self.screen)
         if not self.game_active:
             self.menu.blit()
+        if self.game_active:
+            self.stats.blit()
+            temp = 0
+            self.stats.update(str(temp), str(temp), str('1-1'), str(400), str(temp))
         pygame.display.flip()
 
     def run(self):
