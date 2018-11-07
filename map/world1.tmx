@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="269" height="21" tilewidth="32" tileheight="32" infinite="0" nextlayerid="167" nextobjectid="205">
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="269" height="21" tilewidth="32" tileheight="32" infinite="0" nextlayerid="167" nextobjectid="206">
  <tileset firstgid="1" source="Super-Mario.tsx"/>
  <layer id="163" name="background" width="269" height="21">
   <data encoding="base64">
@@ -182,7 +182,6 @@
   <object id="117" gid="2" x="4064" y="352" width="32" height="32"/>
   <object id="118" gid="2" x="4096" y="352" width="32" height="32"/>
   <object id="121" gid="2" x="4352" y="480" width="32" height="32"/>
-  <object id="122" gid="2" x="4384" y="480" width="32" height="32"/>
   <object id="127" gid="2" x="4960" y="480" width="32" height="32"/>
   <object id="128" gid="2" x="4992" y="352" width="32" height="32"/>
   <object id="129" gid="2" x="5024" y="352" width="32" height="32"/>
@@ -254,6 +253,12 @@
    <properties>
     <property name="invisible" type="bool" value="true"/>
     <property name="item" value="1-up"/>
+   </properties>
+  </object>
+  <object id="205" name="s-q-block1" gid="2" x="4384" y="480" width="32" height="32">
+   <properties>
+    <property name="invisible" type="bool" value="true"/>
+    <property name="item" value="starman"/>
    </properties>
   </object>
  </objectgroup>
