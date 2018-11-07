@@ -54,6 +54,8 @@ class Game:
         self.player_spawn = None
         self.map_center = None
         self.test = None
+        self.timer = 400
+        self.last_tick = 0
         self.init_world_1()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
         self.test = Mario(self.game_objects['blocks'], self.game_objects['q_blocks'], self.game_objects['coins'],
@@ -183,8 +185,11 @@ class Game:
             self.menu.blit()
         if self.game_active:
             self.stats.blit()
-            temp = 0
-            self.stats.update(str(temp), str(temp), str('1-1'), str(400), str(temp))
+            time = pygame.time.get_ticks()
+            if time - self.last_tick > 600 and self.timer is not 0:
+                self.last_tick = time
+                self.timer -= 1
+            self.stats.update(str(0), str(0), str('1-1'), str(self.timer), str(0))
         pygame.display.flip()
 
     def run(self):
