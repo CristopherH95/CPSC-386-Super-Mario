@@ -47,8 +47,8 @@ class Enemy(Sprite):
     def check_player_collision(self):
         """Checks collisions with Mario"""
         if self.rect.colliderect(self.player.rect):
-            if self.rect.y == (self.player.rect.y + self.player.rect.height) and \
-                    self.player.rect.x < self.rect.x < self.player.rect.x + self.player.rect.width:
+            pt = self.rect.midtop
+            if self.rect.collidepoint(pt) and self.rect.left < self.player.rect.centerx < self.rect.right:
                 self.player_enemy_kill = True
                 self.last_frame = pygame.time.get_ticks()
                 self.shell_mode = True

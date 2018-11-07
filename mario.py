@@ -25,7 +25,7 @@ class Mario(pg.sprite.Sprite):
         self.left_bound = 0
         self.timers = {}
         self.state_info = {}
-        self.sprites_about_to_die_group = None
+        self.sprites_about_to_die_group = pg.sprite.Group()
 
         self.shell = pg.sprite.Group()
 
@@ -104,6 +104,7 @@ class Mario(pg.sprite.Sprite):
         self.state_info['facing_right'] = True
         self.state_info['allow_jump'] = True
         self.state_info['dead'] = False
+        self.state_info['death_finish'] = False
         self.state_info['invincible'] = False
         self.state_info['big'] = False
         self.state_info['fire'] = False
@@ -386,6 +387,13 @@ class Mario(pg.sprite.Sprite):
                                     int(rect.height * c.SIZE_MULTIPLIER)))
         return image
 
+    def reset(self, map_layer, game_objects):
+        """Reset states back to original"""
+        self.setup_state_booleans()
+        self.state = c.WALK
+        self.map_layer = map_layer
+        self.game_objects = game_objects
+
     def update(self, keys):
         """Updates Mario's states and animations once per frame"""
         # print(self.state)
@@ -400,6 +408,8 @@ class Mario(pg.sprite.Sprite):
                 self.screen_shift = self.rect.right + 1
                 self.left_bound = self.rect.right - int(self.screen_rect.width * 0.45)
                 self.map_layer.center((self.rect.centerx, self.rect.centery))
+            if self.rect.top > self.screen.get_height():
+                self.start_death_jump()
 
     def check_fall(self):
         """Check if falling, apply gravity if so"""
@@ -659,6 +669,8 @@ class Mario(pg.sprite.Sprite):
         elif (pg.time.get_ticks() - self.timers['death']) > 500:
             self.rect.y += self.y_vel
             self.y_vel += self.gravity
+        if not self.state_info['death_finish'] and self.rect.y > self.screen.get_height() * 2:
+            self.state_info['death_finish'] = True
 
     def start_death_jump(self):
         """Used to put Mario in a DEATH_JUMP state"""
@@ -670,6 +682,7 @@ class Mario(pg.sprite.Sprite):
         self.image = self.right_frames[self.frame_index]
         self.state = c.DEATH_JUMP
         self.state_info['in_transition'] = True
+        pg.mixer.music.stop()
 
     def changing_to_big(self):
         """Changes Mario's image attribute based on time while
@@ -1109,19 +1122,29 @@ class Mario(pg.sprite.Sprite):
 
     def check_mario_x_collisions(self):
         """Check for collisions after Mario is moved on the x axis"""
-        # pipes = pg.sprite.spritecollideany(self, self.pipes)
-        # coin_box = pg.sprite.spritecollideany(self, self.coins)
-        # brick = pg.sprite.spritecollideany(self, self.game_objects['blocks'])
-        koopa = pg.sprite.spritecollideany(self, self.game_objects['koopa'])
-        goomba = pg.sprite.spritecollideany(self, self.game_objects['goomba'])
+        koopa = None
+        for k in self.game_objects['koopa']:
+            k_pts = [k.rect.midleft, k.rect.midright]
+            for pt in k_pts:
+                if self.rect.collidepoint(pt):
+                    koopa = k
+                    break
+            if koopa:
+                break
+        goomba = None
+        for g in self.game_objects['goomba']:
+            g_pts = [g.rect.midleft, g.rect.midright]
+            for pt in g_pts:
+                if self.rect.collidepoint(pt):
+                    goomba = g
+                    break
+            if goomba:
+                break
         power_up = pg.sprite.spritecollideany(self, self.game_objects['items'])
 
-        self.sprites_about_to_die_group = pg.sprite.Group()
-
-        if goomba:
+        if goomba and goomba not in self.sprites_about_to_die_group:
             if self.state_info['invincible']:
                 self.SFX['kick'].play()
-                goomba.kill()
                 self.sprites_about_to_die_group.add(goomba)
             elif self.state_info['big']:
                 self.SFX['pipe'].play()
@@ -1200,29 +1223,26 @@ class Mario(pg.sprite.Sprite):
         """Checks for collisions when Mario moves along the y-axis"""
         # ground_step_pipe = pg.sprite.Group(self.collide_objs, self.pipes)
         # ground_step_or_pipe = pg.sprite.spritecollideany(self, self.pipes)
-        enemy = pg.sprite.spritecollideany(self, self.game_objects['goomba'], self.game_objects['koopa'])
+        enemy = None
+        for g in self.game_objects['goomba']:
+            if self.rect.collidepoint(g.rect.midtop):
+                enemy = g
+                break
+        if not enemy:
+            for k in self.game_objects['koopa']:
+                if self.rect.collidepoint(k.rect.midtop):
+                    enemy = k
+                    break
         shell = pg.sprite.spritecollideany(self, self.game_objects['koopa'])
         # brick = pg.sprite.spritecollideany(self, self.blocks)
         # coin_box = pg.sprite.spritecollideany(self, self.coins)
         power_up = pg.sprite.spritecollideany(self, self.game_objects['items'])
 
-        # if coin_box:
-        #     print('coin_box')
-        #     self.adjust_mario_for_y_coin_box_collisions(coin_box)
-        #
-        # elif brick:
-        #     print('brick')
-        #     self.adjust_mario_for_y_brick_collisions(brick)
-
-        # if ground_step_or_pipe:
-        #     print('ground_step_or_pipe')
-        #     self.adjust_mario_for_y_ground_pipe_collisions(ground_step_or_pipe)
-
         if enemy:
             print('enemy')
             if self.state_info['invincible']:
                 self.SFX['kick'].play()
-                enemy.kill()
+                # enemy.kill()
                 self.sprites_about_to_die_group.add(enemy)
             else:
                 self.adjust_mario_for_y_enemy_collisions(enemy)
@@ -1310,7 +1330,7 @@ class Mario(pg.sprite.Sprite):
         """Mario collisions with all enemies on the y-axis"""
         if self.y_vel > 0:
             self.SFX['stomp'].play()
-            enemy.kill()
+            # enemy.kill()
             if enemy.__class__.__name__ == 'Goomba':
                 enemy.death_timer = pg.time.get_ticks()
                 self.sprites_about_to_die_group.add(enemy)

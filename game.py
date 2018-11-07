@@ -71,6 +71,7 @@ class Game:
         self.paused = False
         self.game_active = False
         self.menu = Menu(self.screen)
+        self.action_map = {pygame.KEYDOWN: self.set_paused}
         print(self.map_layer.view_rect.center)
 
     def retrieve_map_data(self, data_layer_name):
@@ -162,6 +163,14 @@ class Game:
             self.map_group.add(enemy)
             enemy.rect.y += 24
 
+    def set_paused(self, event):
+        """Set the game state to paused based on key press"""
+        key = event.key
+        if key == pygame.K_p:
+            self.paused = not self.paused
+            pygame.mixer.music.load('audio/Pause-Screen.wav')
+            pygame.mixer.music.play()
+
     def update(self):
         """Update the screen and any objects that require individual updates"""
         if not self.paused and self.game_active:
@@ -176,6 +185,7 @@ class Game:
             self.game_objects['blocks'].update()
             self.game_objects['rubble'].update()
             self.mario.update(pygame.key.get_pressed())  # update and check if not touching any walls
+            print(self.mario.rect.x, self.mario.rect.y)
             self.game_objects['q_blocks'].update()
             self.game_objects['items'].update()
             self.game_objects['coins'].update()
@@ -186,12 +196,27 @@ class Game:
             self.menu.blit()
         if self.game_active:
             self.stats.blit()
-            time = pygame.time.get_ticks()
-            if time - self.last_tick > 600 and self.timer is not 0:
-                self.last_tick = time
-                self.timer -= 1
+            if not self.paused:
+                time = pygame.time.get_ticks()
+                if time - self.last_tick > 600 and self.timer is not 0:
+                    self.last_tick = time
+                    self.timer -= 1
             self.stats.update(str(self.score), str(self.coins), str('1-1'), str(self.timer), str(self.lives))
         pygame.display.flip()
+
+    def handle_player_killed(self):
+        """Handle the player being killed in game"""
+        self.lives -= 1
+        if self.lives > 0:
+            self.init_world_1()
+            self.map_group.add(self.mario)
+            self.prep_enemies()
+            self.mario.reset(self.map_layer, self.game_objects)
+            self.map_layer.center((self.player_spawn.x, self.player_spawn.y))
+            self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
+            self.map_layer.zoom = 0.725  # camera zoom
+        else:
+            self.game_active = False
 
     def run(self):
         """Run the application loop so that the menu can be displayed and the game started"""
@@ -209,13 +234,21 @@ class Game:
 
     def start_game(self):
         """Launch the game and begin checking for events"""
-        loop = EventLoop(loop_running=True)
+        loop = EventLoop(loop_running=True, actions=self.action_map)
+        self.score = 0
+        self.lives = 3
+        self.coins = 0
 
-        while loop.loop_running:
+        while loop.loop_running and self.game_active:
             self.clock.tick(60)     # 60 fps cap
             loop.check_events()
             self.update()
-            if not pygame.mixer.music.get_busy():
+            if self.mario.state_info['death_finish']:
+                self.handle_player_killed()
+            elif not pygame.mixer.music.get_busy() and self.mario.state_info['dead']:
+                pygame.mixer.music.load('audio/Mario-Die.wav')
+                pygame.mixer.music.play()
+            elif not pygame.mixer.music.get_busy() and not self.paused:
                 pygame.mixer.music.load('music/main_theme.ogg')
                 pygame.mixer.music.play(-1)
 
