@@ -59,7 +59,7 @@ class Enemy(Sprite):
         # Check if colliding with map (i.e pipe) or dying from block
         if pygame.sprite.spritecollideany(self, self.block):
             self.enemy_block_collide_flag = True
-            self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
+            self.ENEMY_DIRECTION *= -1
             return True
         """NEED TO CHECK FOR IF MARIO HITS BLOCK KILLING ENEMY"""
         #     if self.rect.contains(block_rect.rect):
