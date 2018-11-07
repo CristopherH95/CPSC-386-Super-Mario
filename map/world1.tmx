@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="269" height="21" tilewidth="32" tileheight="32" infinite="0" nextlayerid="167" nextobjectid="187">
+<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="269" height="21" tilewidth="32" tileheight="32" infinite="0" nextlayerid="167" nextobjectid="205">
  <tileset firstgid="1" source="Super-Mario.tsx"/>
  <layer id="163" name="background" width="269" height="21">
   <data encoding="base64">
@@ -34,6 +34,105 @@
  </layer>
  <objectgroup id="166" name="enemy-spawns">
   <object id="186" name="enemy1" x="896" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="187" name="enemy2" x="1920" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="188" name="enemy3" x="2144" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="189" name="enemy4" x="2208" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="190" name="enemy5" x="3616" y="256">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="191" name="enemy6" x="3552" y="256">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="194" name="enemy7" x="4352" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="195" name="enemy8" x="4288" y="512">
+   <properties>
+    <property name="e_type" value="string"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="196" name="enemy9" x="4704" y="512">
+   <properties>
+    <property name="e_type" value="koopa"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="197" name="enemy10" x="4928" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="198" name="enemy11" x="4992" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="199" name="enemy12" x="5088" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="200" name="enemy13" x="5152" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="201" name="enemy14" x="5216" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="202" name="enemy15" x="5280" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="203" name="enemy16" x="6752" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
+   <point/>
+  </object>
+  <object id="204" name="enemy17" x="6816" y="512">
+   <properties>
+    <property name="e_type" value="goomba"/>
+   </properties>
    <point/>
   </object>
  </objectgroup>
@@ -135,12 +234,20 @@
   <object id="60" name="q-block3" gid="21" x="1248" y="480" width="32" height="32"/>
   <object id="63" name="q-block4" gid="21" x="1216" y="352" width="32" height="32"/>
   <object id="68" name="q-block5" gid="21" x="6592" y="480" width="32" height="32"/>
-  <object id="87" name="q-block6" gid="21" x="3296" y="480" width="32" height="32"/>
+  <object id="87" name="q-block6" gid="21" x="3296" y="480" width="32" height="32">
+   <properties>
+    <property name="item" value="mushroom"/>
+   </properties>
+  </object>
   <object id="119" name="q-block7" gid="21" x="4128" y="352" width="32" height="32"/>
   <object id="123" name="q-block8" gid="21" x="4608" y="480" width="32" height="32"/>
   <object id="124" name="q-block9" gid="21" x="4704" y="480" width="32" height="32"/>
   <object id="125" name="q-block10" gid="21" x="4800" y="480" width="32" height="32"/>
-  <object id="126" name="q-block11" gid="21" x="4704" y="352" width="32" height="32"/>
+  <object id="126" name="q-block11" gid="21" x="4704" y="352" width="32" height="32">
+   <properties>
+    <property name="item" value="mushroom"/>
+   </properties>
+  </object>
   <object id="137" name="q-block12" gid="21" x="5184" y="352" width="32" height="32"/>
   <object id="138" name="q-block13" gid="21" x="5216" y="352" width="32" height="32"/>
   <object id="185" name="i-q-block1" gid="19" x="2560" y="480" width="32" height="32">

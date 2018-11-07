@@ -362,14 +362,16 @@ class Mario(pg.sprite.Sprite):
         falling = True
 
         for flr_rect in self.floors:
-            if self.rect.bottom >= flr_rect.top and (flr_rect.left < self.rect.left < flr_rect.right):
+            if self.rect.bottom >= flr_rect.top and (flr_rect.left < self.rect.left < flr_rect.right) and \
+                    not self.rect.top >= flr_rect.bottom:
                 self.rect.bottom = flr_rect.top
                 self.y_vel = 0
                 falling = False
                 break
         if falling:
             for obj in self.collide_objs:
-                if self.rect.bottom >= obj.rect.top and (obj.rect.left < self.rect.left < obj.rect.right):
+                if self.rect.bottom >= obj.rect.top and (obj.rect.left < self.rect.left < obj.rect.right) and \
+                        not self.rect.top >= obj.rect.bottom:
                     self.rect.bottom = obj.rect.top
                     self.y_vel = 0
                     falling = False
@@ -379,7 +381,7 @@ class Mario(pg.sprite.Sprite):
             self.y_vel += c.GRAVITY
             self.frame_index = 4
         elif self.state == c.JUMP:
-            self.state = c.STAND
+            self.state = c.WALK
         self.rect.y += self.y_vel
 
     def handle_state(self, keys):

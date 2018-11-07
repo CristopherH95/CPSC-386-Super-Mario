@@ -5,7 +5,7 @@ from pipe import Pipe
 from coin import Coin
 from maps import load_world_map
 from mario import Mario
-from enemy import Goomba
+from enemy import Goomba, Koopa
 from title import Menu
 import pygame
 
@@ -46,7 +46,6 @@ class Game:
         pygame.display.set_caption(config['game_settings']['title'])
         self.clock = pygame.time.Clock()    # clock for limiting fps
         self.game_objects = None
-        self.goomba = None
         self.tmx_data = None
         self.map_layer = None
         self.map_group = None
@@ -156,12 +155,17 @@ class Game:
         #  to Mario instead of passing individual groups
         enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
         for spawn in enemy_spawn_data:
-            self.goomba = Goomba(self.screen, None, spawn.x, spawn.y, self.test,
-                                 self.game_objects['floors'], self.game_objects['pipes'],
-                                 self.game_objects['goomba'], None)
-            self.game_objects['goomba'].add(self.goomba)
-            self.map_group.add(self.goomba)
-            self.goomba.rect.y += 23
+            if spawn.properties.get('e_type', 'goomba'):
+                enemy = Goomba(self.screen, None, spawn.x, spawn.y, self.test,
+                               self.game_objects['floors'], self.game_objects['collide_objs'],
+                               self.game_objects['goomba'], self.game_objects['koopa'])
+                self.game_objects['goomba'].add(enemy)
+            else:
+                enemy = Koopa(self.screen, None, spawn.x, spawn.y, self.test,
+                              self.game_objects['floors'], self.game_objects['collide_objs'],
+                              self.game_objects['goomba'], self.game_objects['koopa'])
+            self.map_group.add(enemy)
+            enemy.rect.y += 23
 
     def update(self):
         """Update the screen and any objects that require individual updates"""
