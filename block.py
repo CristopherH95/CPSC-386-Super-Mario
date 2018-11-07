@@ -22,6 +22,27 @@ class Block(Sprite):
         self.screen.blit(self.image, self.rect)
 
 
+class BlockRubble(Sprite):
+    """Sprite for pieces of a destroyed block"""
+    def __init__(self, x, y, initial_image, speed_x, speed_y, screen):
+        super(BlockRubble, self).__init__()
+        self.image = initial_image
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+        self.speed_x, self.speed_y = speed_x, speed_y
+        self.screen = screen
+
+    def update(self):
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+        if self.speed_x > 0:
+            self.speed_x -= 1
+        else:
+            self.speed_x += 1
+        if self.rect.y > self.screen.get_height():
+            self.kill()
+
+
 class CoinBlock(Block):
     """A block which contains a number of items"""
     STD_STATE = 'std'
@@ -29,12 +50,13 @@ class CoinBlock(Block):
     MOVE_UP_STATE = 'move-up'
     MOVE_DOWN_STATE = 'move-down'
 
-    def __init__(self, x, y, initial_image, screen, map_group, coins=0, allow_hits=False):
+    def __init__(self, x, y, initial_image, screen, map_group, rubble_group=None, coins=0, allow_hits=False):
         super(CoinBlock, self).__init__(x, y, initial_image, screen)
         self.coin_counter = int(coins)
         self.blank_img = image.load('map/super-mario-empty-block.png') if self.coin_counter > 0 else None
         self.coins = []
         self.map_group = map_group
+        self.rubble_group = rubble_group
         self.allow_hits = allow_hits
         self.state = {
             'meta': CoinBlock.STD_STATE,
@@ -48,10 +70,10 @@ class CoinBlock(Block):
         self.item_location = self.rect.top - 1
 
     @classmethod
-    def coin_block_from_tmx_obj(cls, obj, screen, map_group):
+    def coin_block_from_tmx_obj(cls, obj, screen, map_group, game_objects):
         """Create a CoinBlock object from a tmx data object"""
         return cls(obj.x, obj.y, obj.image, screen, map_group, coins=obj.properties.get('coins', 0),
-                   allow_hits=obj.properties.get('allow_hits', False))
+                   allow_hits=obj.properties.get('allow_hits', False), rubble_group=game_objects['rubble'])
 
     def set_blank(self):
         """Set the block to a blank block, which cannot be hit any longer"""
@@ -81,6 +103,15 @@ class CoinBlock(Block):
                     if not self.coin_counter > 0:
                         self.set_blank()
                     return n_coin.points
+                elif self.rubble_group is not None and other.state_info['big']:
+                    print('rubble time')
+                    rubble_img = image.load('images/environment/super-mario-bricks-rubble.png')
+                    speeds = [(-15, 5), (-10, 5), (10, 5), (15, 5)]
+                    for speed in speeds:
+                        rubble = BlockRubble(self.rect.x, self.rect.y, rubble_img, speed[0], speed[1], self.screen)
+                        self.rubble_group.add(rubble)
+                        self.map_group.add(rubble)
+                    self.kill()
 
     def update_coins(self):
         """Update all coins in the air over the block"""
@@ -151,7 +182,7 @@ class QuestionBlock(CoinBlock):
         return cls(obj.x, obj.y, screen, map_group, game_objects, item_type)
 
     def check_hit(self, other):
-        super(QuestionBlock, self).check_hit(other)
+        points = super(QuestionBlock, self).check_hit(other)
         if self.item and self.state['meta'] == CoinBlock.HIT_STATE:
             obstacles, floor = self.game_objects['collide_objs'], self.game_objects['floors']
             if self.item == QuestionBlock.MUSHROOM and not other.state_info['big']:
@@ -166,6 +197,8 @@ class QuestionBlock(CoinBlock):
             self.map_group.add(n_item)
             self.item = None
             self.state['blank'] = True
+        elif points:
+            return points
 
     def update(self):
         """Update the question block to its next animated image"""

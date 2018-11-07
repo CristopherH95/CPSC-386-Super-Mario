@@ -52,18 +52,19 @@ class Game:
         self.map_layer = None
         self.map_group = None
         self.player_spawn = None
-        self.map_center = None
-        self.test = None
+        self.mario = None
         self.timer = 400
         self.last_tick = 0
+        self.score = 0
+        self.lives = 3
+        self.coins = 0
         self.init_world_1()
-        self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
-        self.test = Mario(self.game_objects, self.map_layer, self.screen)   # test sprite for player location
+        self.mario = Mario(self.game_objects, self.map_layer, self.screen)   # test sprite for player location
         self.prep_enemies()
-        self.test.rect.x, self.test.rect.y = self.player_spawn.x, self.player_spawn.y
-        self.map_layer.center(self.map_center)   # center camera
+        self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
+        self.map_layer.center((self.mario.rect.x, self.mario.rect.y))   # center camera
         self.map_layer.zoom = 0.725     # camera zoom
-        self.map_group.add(self.test)   # add test sprite to map group
+        self.map_group.add(self.mario)   # add test sprite to map group
         self.paused = False
         # print(self.map_layer.view_rect.center)
         # action map for event loop
@@ -85,7 +86,6 @@ class Game:
         self.tmx_data, self.map_layer, self.map_group = load_world_map('map/world1.tmx', self.screen)
         self.player_spawn = self.tmx_data.get_object_by_name('player')  # get player spawn object from map data
         self.init_game_objects()
-        self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
 
     def init_game_objects(self):
         """Create all game objects in memory by extracting them from the map file"""
@@ -93,6 +93,7 @@ class Game:
             'floors': [],
             'blocks': pygame.sprite.Group(),
             'q_blocks': pygame.sprite.Group(),
+            'rubble': pygame.sprite.Group(),
             'coins': pygame.sprite.Group(),
             'pipes': pygame.sprite.Group(),
             'collide_objs': pygame.sprite.Group(),  # for checking collisions with all collide-able objects
@@ -114,7 +115,7 @@ class Game:
             print(str(obj.y))
         for block in block_data:
             if not block.properties.get('pipe', False):
-                b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group)
+                b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group, self.game_objects)
             else:
                 b_sprite = Block(block.x, block.y, block.image, self.screen)
             self.map_group.add(b_sprite)    # draw using this group
@@ -150,12 +151,12 @@ class Game:
         enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
         for spawn in enemy_spawn_data:
             if spawn.properties.get('e_type', 'goomba'):
-                enemy = Goomba(self.screen, spawn.x, spawn.y, self.test,
+                enemy = Goomba(self.screen, spawn.x, spawn.y, self.mario,
                                self.game_objects['floors'], self.game_objects['collide_objs'],
                                self.game_objects['goomba'], self.game_objects['koopa'])
                 self.game_objects['goomba'].add(enemy)
             else:
-                enemy = Koopa(self.screen, spawn.x, spawn.y, self.test,
+                enemy = Koopa(self.screen, spawn.x, spawn.y, self.mario,
                               self.game_objects['floors'], self.game_objects['collide_objs'],
                               self.game_objects['goomba'], self.game_objects['koopa'])
             self.map_group.add(enemy)
@@ -165,11 +166,16 @@ class Game:
         """Update the screen and any objects that require individual updates"""
         if not self.paused and self.game_active:
             for block in self.game_objects['blocks']:
-                block.check_hit(other=self.test)
+                points = block.check_hit(other=self.mario)
+                if points:
+                    self.score += points
             for q_block in self.game_objects['q_blocks']:
-                q_block.check_hit(other=self.test)
+                points = q_block.check_hit(other=self.mario)
+                if points:
+                    self.score += points
             self.game_objects['blocks'].update()
-            self.test.update(pygame.key.get_pressed())  # update and check if not touching any walls
+            self.game_objects['rubble'].update()
+            self.mario.update(pygame.key.get_pressed())  # update and check if not touching any walls
             self.game_objects['q_blocks'].update()
             self.game_objects['items'].update()
             self.game_objects['coins'].update()
@@ -184,7 +190,7 @@ class Game:
             if time - self.last_tick > 600 and self.timer is not 0:
                 self.last_tick = time
                 self.timer -= 1
-            self.stats.update(str(0), str(0), str('1-1'), str(self.timer), str(0))
+            self.stats.update(str(self.score), str(self.coins), str('1-1'), str(self.timer), str(self.lives))
         pygame.display.flip()
 
     def run(self):
@@ -209,6 +215,9 @@ class Game:
             self.clock.tick(60)     # 60 fps cap
             loop.check_events()
             self.update()
+            if not pygame.mixer.music.get_busy():
+                pygame.mixer.music.load('music/main_theme.ogg')
+                pygame.mixer.music.play(-1)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-from item import Item
+from item import Item, FireBallController
 import pygame as pg
 import constants as c
 import tools
@@ -18,6 +18,9 @@ class Mario(pg.sprite.Sprite):
         self.map_layer = map_layer
         self.screen = screen
         self.screen_rect = self.screen.get_rect()
+        # fireball controller allows the throwing of fireballs when possible
+        self.fireball_controller = FireBallController(screen, map_layer,
+                                                      game_objects['collide_objs'], game_objects['floors'], self)
         self.screen_shift = 0
         self.left_bound = 0
         self.timers = {}
@@ -515,11 +518,11 @@ class Mario(pg.sprite.Sprite):
 
     def shoot_fireball(self):
         """Shoots fireball, allowing no more than two to exist at once"""
-        self.SFX['fireball'].play()
         # self.fireball_count = self.count_number_of_fireballs(powerup_group)
 
         if (pg.time.get_ticks() - self.timers['last_fireball']) > 200:
-            if self.fireball_count < 2:
+            if self.fireball_controller.throw_fireball():
+                self.SFX['fireball'].play()
                 self.state_info['allow_fireball'] = False
                 self.timers['last_fireball'] = pg.time.get_ticks()
 
@@ -806,13 +809,17 @@ class Mario(pg.sprite.Sprite):
         self.state_info['in_transition'] = True
 
         if self.state_info['facing_right']:
-            frames = [self.right_fire_frames[3],
-                      self.right_big_red_frames[3],
-                      self.right_big_black_frames[3]]
+            frames = [self.right_big_normal_frames[0],
+                      self.fire_frames[0]]
+            # frames = [self.right_fire_frames[3],
+            #           self.right_big_red_frames[3],
+            #           self.right_big_black_frames[3]]
         else:
-            frames = [self.left_fire_frames[3],
-                      self.left_big_red_frames[3],
-                      self.left_big_black_frames[3]]
+            frames = [self.left_big_normal_frames[0],
+                      self.left_fire_frames[0]]
+            # frames = [self.left_fire_frames[3],
+            #           self.left_big_red_frames[3],
+            #           self.left_big_black_frames[3]]
 
         if self.timers['fire_transition'] == 0:
             self.timers['fire_transition'] = pg.time.get_ticks()
@@ -822,31 +829,31 @@ class Mario(pg.sprite.Sprite):
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 195:
             self.image = frames[1]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 260:
-            self.image = frames[2]
+            self.image = frames[0]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 325:
-            self.image = frames[3]
+            self.image = frames[1]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 390:
             self.image = frames[0]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 455:
             self.image = frames[1]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 520:
-            self.image = frames[2]
+            self.image = frames[0]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 585:
-            self.image = frames[3]
+            self.image = frames[1]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 650:
             self.image = frames[0]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 715:
             self.image = frames[1]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 780:
-            self.image = frames[2]
+            self.image = frames[0]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 845:
-            self.image = frames[3]
+            self.image = frames[1]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 910:
             self.image = frames[0]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 975:
             self.image = frames[1]
         elif (pg.time.get_ticks() - self.timers['fire_transition']) < 1040:
-            self.image = frames[2]
+            self.image = frames[1]
             self.state_info['fire'] = True
             self.state_info['in_transition'] = False
             self.state = c.WALK
@@ -920,7 +927,7 @@ class Mario(pg.sprite.Sprite):
             self.state_info['big'] = False
             self.timers['transition'] = 0
             self.timers['hurt_invincible_1'] = 0
-            self.become_small()
+        self.become_small()
 
     def adjust_rect(self):
         """Makes sure new Rect has the same bottom and left
@@ -1037,8 +1044,8 @@ class Mario(pg.sprite.Sprite):
                 self.state_info['invincible'] = False
         else:
             if self.state_info['big']:
-                self.right_frames = self.right_big_normal_frames
-                self.left_frames = self.left_big_normal_frames
+                self.right_frames = self.invincible_big_frames_list[0][0]
+                self.left_frames = self.invincible_big_frames_list[0][1]
             else:
                 self.right_frames = self.invincible_small_frames_list[0][0]
                 self.left_frames = self.invincible_small_frames_list[0][1]
@@ -1118,13 +1125,22 @@ class Mario(pg.sprite.Sprite):
         else:
             self.image = self.left_frames[self.frame_index]
 
+    def check_wall(self):
+        """Check if Mario is attempting to walk through a wall"""
+        for obj in self.game_objects['collide_objs']:
+            pts = [obj.rect.midleft, obj.rect.bottomleft, obj.rect.midright, obj.rect.bottomright]
+            for pt in pts:
+                if self.rect.collidepoint(pt):
+                    return True
+        return False
+
     def adjust_mario_position(self):
         """Adjusts Mario's position based on his x, y velocities and
         potential collisions"""
         # self.last_x_position = self.rect.right
         if not self.check_left_side():
             self.rect.x += round(self.x_vel * 2)
-        else:
+        elif not self.check_wall():
             self.rect.x += 1
         # self.rect.x += round(self.x_vel)
         self.check_mario_x_collisions()
@@ -1287,7 +1303,7 @@ class Mario(pg.sprite.Sprite):
 
         elif power_up:
             print('power_up')
-            if power_up.name == c.STAR:
+            if power_up.item_type == Item.STARMAN:
                 self.SFX['powerup'].play()
                 power_up.kill()
                 self.state_info['invincible'] = True
