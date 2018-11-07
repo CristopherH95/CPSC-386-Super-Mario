@@ -230,16 +230,16 @@ class FireBallController:
         self.obstacles = obstacles
         self.floor = floor
         self.fireballs = Group()
-        self.fb_images = [pygimg.load('map/super-mario-fireball-1'), pygimg.load('map/super-mario-fireball-2'),
-                          pygimg.load('map/super-mario-fireball-3'), pygimg.load('map/super-mario-fireball-4')]
-        self.exp_images = [pygimg.load('map/super-mario-fireball-explode-1'),
-                           pygimg.load('map/super-mario-fireball-explode-2'),
-                           pygimg.load('map/super-mario-fireball-explode-3')]
+        self.fb_images = [pygimg.load('map/super_mario_fireball_1.png'), pygimg.load('map/super_mario_fireball_2.png'),
+                          pygimg.load('map/super_mario_fireball_3.png'), pygimg.load('map/super_mario_fireball_4.png')]
+        self.exp_images = [pygimg.load('map/super_mario_fireball_explode_1.png'),
+                           pygimg.load('map/super_mario_fireball_explode_2.png'),
+                           pygimg.load('map/super_mario_fireball_explode_3.png')]
 
     def throw_fireball(self):
         """If there are not two fireballs already active, then throw a new fireball"""
         if len(self.fireballs) < 2:
-            if self.origin.facing_right:
+            if self.origin.state_info['facing_right']:
                 n_fireball = FireBall(self.origin.rect.x + 1, self.origin.rect.topright, self.fb_images,
                                       self.exp_images, self.obstacles, self.floor)
             else:
@@ -247,6 +247,8 @@ class FireBallController:
                                       self.obstacles, self.floor, speed=-5)
             self.fireballs.add(n_fireball)
             self.map_group.add(n_fireball)
+            return True
+        return False
 
     def update_fireballs(self):
         """Update all fireballs currently in play"""
