@@ -104,7 +104,7 @@ class Enemy(Sprite):
         # Also might stops from getting multiple flags set off
         self.check_player_collision()
         self.check_block_collision()
-        # self.check_friendly_collision()
+        self.check_friendly_collision()
         if self.enemy_player_collide_flag is True or self.enemy_block_collide_flag is True\
                 or self.enemy_goomba_collide_flag is True or self.enemy_koopa_collide_flag is True:
             return True
