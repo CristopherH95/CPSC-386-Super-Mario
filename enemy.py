@@ -47,8 +47,8 @@ class Enemy(Sprite):
     def check_player_collision(self):
         # Check collision with player
         if self.rect.colliderect(self.player.rect):
-            if self.rect.top == self.player.rect.bottom:
-                print('Here')
+            if self.rect.y == (self.player.rect.y + self.player.rect.height) and \
+                    self.player.rect.x < self.rect.x < self.player.rect.x + self.player.rect.width:
                 self.player_enemy_kill = True
                 self.last_frame = pygame.time.get_ticks()
                 self.shell_mode = True
@@ -71,19 +71,18 @@ class Enemy(Sprite):
     def check_friendly_collision(self):
         """FIX ENEMY COLLIDING WITH SELF"""
         # Check for collisions with friendly or koopa shell
-        for rect in self.goombas:
-            if self.rect.colliderect(rect):
-                print('True')
-        # if pygame.sprite.spritecollideany(self, self.goombas):
-        #     self.enemy_goomba_collide_flag = True
-        #     self.ENEMY_DIRECTION *= -1
-        #     return True
-        if pygame.sprite.spritecollideany(self, self.koopas):
-            # if self.koopas.shell_movement:
-            #     self.shell_enemy_kill = True
-            self.enemy_koopa_collide_flag = True
-            self.ENEMY_DIRECTION *= -1
-            return True
+        for goomba_rect in self.goombas:
+            if goomba_rect is not self and self.rect.colliderect(goomba_rect.rect):
+                self.enemy_goomba_collide_flag = True
+                self.ENEMY_DIRECTION *= -1
+                return True
+        for koopa_rect in self.koopas:
+            if koopa_rect is not self and self.rect.colliderect(koopa_rect.rect):
+                if self.koopas.shell_movement:
+                    self.shell_enemy_kill = True
+                self.enemy_koopa_collide_flag = True
+                self.ENEMY_DIRECTION *= -1
+                return True
 
     def check_floor(self):
         # Returns true if at enemy on floor
