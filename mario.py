@@ -1131,6 +1131,10 @@ class Mario(pg.sprite.Sprite):
             pts = [obj.rect.midleft, obj.rect.bottomleft, obj.rect.midright, obj.rect.bottomright]
             for pt in pts:
                 if self.rect.collidepoint(pt):
+                    if obj.rect.right > self.rect.right:
+                        self.rect.x -= int(obj.rect.width * 0.25)
+                    else:
+                        self.rect.x += int(obj.rect.width * 0.25)
                     return True
         return False
 
@@ -1138,10 +1142,8 @@ class Mario(pg.sprite.Sprite):
         """Adjusts Mario's position based on his x, y velocities and
         potential collisions"""
         # self.last_x_position = self.rect.right
-        if not self.check_left_side():
+        if not self.check_left_side() and not self.check_wall():
             self.rect.x += round(self.x_vel * 2)
-        elif not self.check_wall():
-            self.rect.x += 1
         # self.rect.x += round(self.x_vel)
         self.check_mario_x_collisions()
 

@@ -89,6 +89,11 @@ class Enemy(Sprite):
         for floor_rect in self.floor:
             if self.rect.colliderect(floor_rect):
                 return True
+        for block in self.block:
+            pts = [block.rect.topleft, block.rect.midtop, block.rect.topright]
+            for pt in pts:
+                if self.rect.collidepoint(pt):
+                    return True
 
     def check_boundary(self):
         if self.rect.x >= (self.player.rect.x + (self.screen.get_width()/2)):

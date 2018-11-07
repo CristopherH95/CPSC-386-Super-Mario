@@ -2,6 +2,7 @@ from animate import Animator
 from coin import Coin
 from item import Mushroom, FireFlower, StarMan, OneUp
 from pygame import image
+from pygame import mixer
 from pygame.sprite import Sprite
 
 
@@ -50,11 +51,14 @@ class CoinBlock(Block):
     MOVE_UP_STATE = 'move-up'
     MOVE_DOWN_STATE = 'move-down'
 
-    def __init__(self, x, y, initial_image, screen, map_group, rubble_group=None, coins=0, allow_hits=False):
+    def __init__(self, x, y, initial_image, screen, map_group, rubble_group=None, coins=0, allow_hits=False,
+                 sound=None):
         super(CoinBlock, self).__init__(x, y, initial_image, screen)
         self.coin_counter = int(coins)
         self.blank_img = image.load('map/super-mario-empty-block.png') if self.coin_counter > 0 else None
         self.coins = []
+        self.sound = sound if sound else mixer.Sound('audio/Coin.wav')
+        self.break_sound = mixer.Sound('audio/Break-block.wav')
         self.map_group = map_group
         self.rubble_group = rubble_group
         self.allow_hits = allow_hits
@@ -89,7 +93,6 @@ class CoinBlock(Block):
             if hit:    # leave other parameter as None to force hit state (for testing)
                 other.rect.y = self.rect.bottom
                 other.y_vel = 7
-                print('other hit', other)
                 if not self.state['meta'] == CoinBlock.HIT_STATE:
                     self.state['meta'] = CoinBlock.HIT_STATE
                     self.state['move-state'] = CoinBlock.MOVE_UP_STATE
@@ -102,15 +105,16 @@ class CoinBlock(Block):
                     self.map_group.add(n_coin)
                     if not self.coin_counter > 0:
                         self.set_blank()
+                    self.sound.play()
                     return n_coin.points
                 elif self.rubble_group is not None and other.state_info['big']:
-                    print('rubble time')
                     rubble_img = image.load('images/environment/super-mario-bricks-rubble.png')
                     speeds = [(-15, 5), (-10, 5), (10, 5), (15, 5)]
                     for speed in speeds:
                         rubble = BlockRubble(self.rect.x, self.rect.y, rubble_img, speed[0], speed[1], self.screen)
                         self.rubble_group.add(rubble)
                         self.map_group.add(rubble)
+                    self.break_sound.play()
                     self.kill()
 
     def update_coins(self):
@@ -170,6 +174,8 @@ class QuestionBlock(CoinBlock):
             self.item = None
             coins = 1
         super(QuestionBlock, self).__init__(x, y, initial_image, screen, map_group, coins=coins if coins else 0)
+        if self.item:
+            self.sound = mixer.Sound('audio/Powerup-Appear.wav')
         self.blank_img = image.load('map/super-mario-empty-block.png')  # force blank image
         self.state['blank'] = False
 
@@ -197,6 +203,7 @@ class QuestionBlock(CoinBlock):
             self.map_group.add(n_item)
             self.item = None
             self.state['blank'] = True
+            self.sound.play()
         elif points:
             return points
 
