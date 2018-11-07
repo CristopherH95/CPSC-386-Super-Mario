@@ -141,13 +141,6 @@ class Game:
             else:
                 self.game_objects['win-zone'].append(pygame.Rect(flag_part.x, flag_part.y,
                                                                  flag_part.width, flag_part.height))
-        # for spawn in enemy_spawn_data:
-        #     self.goomba = Goomba(self.screen, None, spawn.x, spawn.y, self.test,
-        #                          self.game_objects['floors'], self.game_objects['pipes'],
-        #                          self.game_objects['goomba'], None)
-        #     self.game_objects['goomba'].add(self.goomba)
-        #     self.map_group.add(self.goomba)
-        #     self.goomba.rect.y -= 23
 
     def prep_enemies(self):
         """Prepare the enemy sprites"""

@@ -759,8 +759,9 @@ class Mario(pg.sprite.Sprite):
 
     def timer_between_these_two_times(self, start_time, end_time):
         """Checks if the timer is at the right time for the action."""
-        if (end_time < pg.time.get_ticks() - self.timers['transition']) >= start_time:
+        if start_time <= (pg.time.get_ticks() - self.timers['transition']) < end_time:
             return True
+        return False
 
     def set_mario_to_middle_image(self):
         """During a change from small to big, sets mario's image to the
