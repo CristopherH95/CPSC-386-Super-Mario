@@ -2,9 +2,9 @@ import pygame
 from animate import Animator
 from pygame.sprite import Sprite
 
-ENEMY_DIRECTION = 1
-ENEMY_GRAVITY = 10
-ENEMY_SPEED = 3
+ENEMY_DIRECTION = -1
+ENEMY_GRAVITY = 4
+ENEMY_SPEED = 2
 
 
 class Enemy(Sprite):
@@ -45,7 +45,7 @@ class Enemy(Sprite):
         self.stop = False
 
     def check_player_collision(self):
-        # Check collision with player
+        """Checks collisions with Mario"""
         if self.rect.colliderect(self.player.rect):
             if self.rect.y == (self.player.rect.y + self.player.rect.height) and \
                     self.player.rect.x < self.rect.x < self.player.rect.x + self.player.rect.width:
@@ -62,11 +62,12 @@ class Enemy(Sprite):
             self.ENEMY_DIRECTION *= -1
             return True
         """NEED TO CHECK FOR IF MARIO HITS BLOCK KILLING ENEMY"""
-        #     if self.rect.contains(block_rect.rect):
-        #         self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
-        #         self.enemy_block_collide_flag = True
-        #         self.block_enemy_kill = True
-        #         return True
+        for block_rect in self.block:
+            if self.rect.contains(block_rect.rect):
+                self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
+                self.enemy_block_collide_flag = True
+                self.block_enemy_kill = True
+                return True
 
     def check_friendly_collision(self):
         """FIX ENEMY COLLIDING WITH SELF"""
@@ -101,8 +102,9 @@ class Enemy(Sprite):
         else:
             self.start_movement = True
         if self.rect.x <= (self.player.rect.x - (self.screen.get_width()/2)) or \
-                self.rect.y >= self.screen.get_height():
+                self.rect.y - (self.rect.height * 2) >= self.screen.get_height():
             self.dead = True
+            self.kill()
 
     def check_collisions(self):
         # If flag is set already, no need to check collisions again
@@ -154,13 +156,13 @@ class Goomba(Enemy):
         self.check_boundary()
         # If no blocks are touching enemy -> Fall Down Pit
         if not self.check_floor() and self.start_movement:
-            self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_SPEED)
+            self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_GRAVITY)
+            self.rect.x = self.rect.x + (self.ENEMY_DIRECTION * (self.ENEMY_SPEED - 1))
         if self.check_floor() and self.start_movement:
             self.rect.x = self.rect.x + (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
 
         # print('Player ' + str(self.check_player_collision()))
         # print('Block ' + str(self.check_block_collision()))
-        """FIX THIS"""
         # print('Enemy' + str(self.check_friendly_collision()))
 
         if self.check_collisions():
@@ -171,12 +173,10 @@ class Goomba(Enemy):
                     time = pygame.time.get_ticks()
                     # Animate and keep on screen for half a second before killing sprite
                     self.animator = Animator(self.crushed_images)
-                    self.stop = True
-                    if abs(self.last_frame - time) > 500:
-                        self.rect.y += self.screen.get_width()
-                        self.dead = True
+                    if abs(time - self.last_frame) > 1000:
+                        self.kill()
                 # Player killed so stop but animate
-                else:
+                if self.player.state_info['dead']:
                     self.dead = True
             # Collision with map or block
             if self.enemy_block_collide_flag:
@@ -244,6 +244,7 @@ class Koopa(Enemy):
     def update(self):
         self.koopa_physics()
         self.image = self.animator.get_image()
+        self.image = pygame.transform.scale(self.image, (35, 55))
 
     def check_player_shell_collision(self):
         # Check player collision when in shell
