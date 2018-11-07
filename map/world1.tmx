@@ -148,50 +148,219 @@
   <object id="177" name="floor4" x="6048" y="576" width="2560" height="32"/>
  </objectgroup>
  <objectgroup id="158" name="blocks">
-  <object id="56" gid="2" x="1152" y="480" width="32" height="32"/>
-  <object id="61" gid="2" x="1216" y="480" width="32" height="32"/>
-  <object id="62" gid="2" x="1280" y="480" width="32" height="32"/>
-  <object id="65" gid="2" x="6496" y="480" width="32" height="32"/>
-  <object id="66" gid="2" x="6528" y="480" width="32" height="32"/>
-  <object id="67" gid="2" x="6560" y="480" width="32" height="32"/>
-  <object id="69" gid="2" x="6624" y="480" width="32" height="32"/>
-  <object id="77" gid="16" x="1696" y="576" width="64" height="64"/>
-  <object id="79" gid="16" x="1952" y="576" width="64" height="64"/>
-  <object id="81" gid="16" x="2240" y="576" width="64" height="64"/>
-  <object id="85" gid="2" x="3264" y="480" width="32" height="32"/>
-  <object id="86" gid="2" x="3328" y="480" width="32" height="32"/>
-  <object id="88" gid="2" x="3360" y="352" width="32" height="32"/>
-  <object id="89" gid="2" x="3392" y="352" width="32" height="32"/>
-  <object id="90" gid="2" x="3424" y="352" width="32" height="32"/>
-  <object id="91" gid="2" x="3456" y="352" width="32" height="32"/>
-  <object id="92" gid="2" x="3488" y="352" width="32" height="32"/>
-  <object id="93" gid="2" x="3520" y="352" width="32" height="32"/>
-  <object id="94" gid="2" x="3552" y="352" width="32" height="32"/>
-  <object id="105" gid="2" x="3584" y="352" width="32" height="32"/>
-  <object id="106" gid="2" x="3616" y="352" width="32" height="32"/>
-  <object id="107" gid="2" x="3648" y="352" width="32" height="32"/>
-  <object id="108" gid="2" x="3680" y="352" width="32" height="32"/>
-  <object id="109" gid="2" x="3712" y="352" width="32" height="32"/>
-  <object id="110" gid="2" x="3744" y="352" width="32" height="32"/>
-  <object id="111" gid="2" x="3776" y="352" width="32" height="32"/>
-  <object id="112" gid="2" x="3808" y="352" width="32" height="32"/>
-  <object id="113" gid="2" x="3840" y="352" width="32" height="32"/>
-  <object id="114" gid="2" x="3872" y="352" width="32" height="32"/>
-  <object id="115" gid="2" x="4000" y="352" width="32" height="32"/>
-  <object id="116" gid="2" x="4032" y="352" width="32" height="32"/>
-  <object id="117" gid="2" x="4064" y="352" width="32" height="32"/>
-  <object id="118" gid="2" x="4096" y="352" width="32" height="32"/>
-  <object id="121" gid="2" x="4352" y="480" width="32" height="32"/>
-  <object id="127" gid="2" x="4960" y="480" width="32" height="32"/>
-  <object id="128" gid="2" x="4992" y="352" width="32" height="32"/>
-  <object id="129" gid="2" x="5024" y="352" width="32" height="32"/>
-  <object id="130" gid="2" x="5056" y="352" width="32" height="32"/>
-  <object id="132" gid="2" x="5152" y="352" width="32" height="32"/>
-  <object id="134" gid="2" x="5248" y="352" width="32" height="32"/>
-  <object id="135" gid="2" x="5184" y="480" width="32" height="32"/>
-  <object id="136" gid="2" x="5216" y="480" width="32" height="32"/>
+  <object id="56" gid="2" x="1152" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="61" gid="2" x="1216" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="62" gid="2" x="1280" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="65" gid="2" x="6496" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="66" gid="2" x="6528" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="67" gid="2" x="6560" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="69" gid="2" x="6624" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="77" gid="16" x="1696" y="576" width="64" height="64">
+   <properties>
+    <property name="pipe" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="79" gid="16" x="1952" y="576" width="64" height="64">
+   <properties>
+    <property name="pipe" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="81" gid="16" x="2240" y="576" width="64" height="64">
+   <properties>
+    <property name="pipe" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="85" gid="2" x="3264" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="86" gid="2" x="3328" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="88" gid="2" x="3360" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="89" gid="2" x="3392" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="90" gid="2" x="3424" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="91" gid="2" x="3456" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="92" gid="2" x="3488" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="93" gid="2" x="3520" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="94" gid="2" x="3552" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="105" gid="2" x="3584" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="106" gid="2" x="3616" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="107" gid="2" x="3648" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="108" gid="2" x="3680" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="109" gid="2" x="3712" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="110" gid="2" x="3744" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="111" gid="2" x="3776" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="112" gid="2" x="3808" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="113" gid="2" x="3840" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="114" gid="2" x="3872" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="115" gid="2" x="4000" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="116" gid="2" x="4032" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="117" gid="2" x="4064" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="118" gid="2" x="4096" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="121" gid="2" x="4352" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="127" gid="2" x="4960" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="128" gid="2" x="4992" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="129" gid="2" x="5024" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="130" gid="2" x="5056" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="132" gid="2" x="5152" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="134" gid="2" x="5248" y="352" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="135" gid="2" x="5184" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
+  <object id="136" gid="2" x="5216" y="480" width="32" height="32">
+   <properties>
+    <property name="allow_hits" type="bool" value="true"/>
+   </properties>
+  </object>
   <object id="139" gid="2" x="4128" y="480" width="32" height="32">
    <properties>
+    <property name="allow_hits" type="bool" value="true"/>
     <property name="coins" type="int" value="10"/>
    </properties>
   </object>

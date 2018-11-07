@@ -117,4 +117,3 @@ class GameStats:
         self.screen.blit(self.TNumber, self.tnRect)
         self.screen.blit(self.Lives, self.lRect)
         self.screen.blit(self.LNumber, self.lnRect)
-

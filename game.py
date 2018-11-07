@@ -58,11 +58,7 @@ class Game:
         self.last_tick = 0
         self.init_world_1()
         self.map_center = self.map_layer.translate_point((self.player_spawn.x, self.player_spawn.y))
-        self.test = Mario(self.game_objects['blocks'], self.game_objects['q_blocks'], self.game_objects['coins'],
-                          self.game_objects['pipes'], self.game_objects['goomba'],
-                          self.game_objects['koopa'], self.game_objects['items'],
-                          self.game_objects['collide_objs'], self.game_objects['floors'],
-                          self.map_layer, self.screen)   # test sprite for player location
+        self.test = Mario(self.game_objects, self.map_layer, self.screen)   # test sprite for player location
         self.prep_enemies()
         self.test.rect.x, self.test.rect.y = self.player_spawn.x, self.player_spawn.y
         self.map_layer.center(self.map_center)   # center camera
@@ -117,10 +113,10 @@ class Game:
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
             print(str(obj.y))
         for block in block_data:
-            if 'coins' in block.properties:
+            if not block.properties.get('pipe', False):
                 b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group)
             else:
-                b_sprite = CoinBlock(block.x, block.y, block.image, self.screen, self.map_group, coins=0)
+                b_sprite = Block(block.x, block.y, block.image, self.screen)
             self.map_group.add(b_sprite)    # draw using this group
             self.game_objects['blocks'].add(b_sprite)       # check collisions using this group
             self.game_objects['collide_objs'].add(b_sprite)
@@ -146,13 +142,6 @@ class Game:
             else:
                 self.game_objects['win-zone'].append(pygame.Rect(flag_part.x, flag_part.y,
                                                                  flag_part.width, flag_part.height))
-        # for spawn in enemy_spawn_data:
-        #     self.goomba = Goomba(self.screen, None, spawn.x, spawn.y, self.test,
-        #                          self.game_objects['floors'], self.game_objects['pipes'],
-        #                          self.game_objects['goomba'], None)
-        #     self.game_objects['goomba'].add(self.goomba)
-        #     self.map_group.add(self.goomba)
-        #     self.goomba.rect.y -= 23
 
     def prep_enemies(self):
         """Prepare the enemy sprites"""
@@ -175,6 +164,10 @@ class Game:
     def update(self):
         """Update the screen and any objects that require individual updates"""
         if not self.paused and self.game_active:
+            for block in self.game_objects['blocks']:
+                block.check_hit(other=self.test)
+            for q_block in self.game_objects['q_blocks']:
+                q_block.check_hit(other=self.test)
             self.game_objects['blocks'].update()
             self.test.update(pygame.key.get_pressed())  # update and check if not touching any walls
             self.game_objects['q_blocks'].update()
