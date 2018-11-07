@@ -115,6 +115,7 @@ class Game:
         # enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+            print(str(obj.y))
         for block in block_data:
             if 'coins' in block.properties:
                 b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group)
@@ -160,16 +161,16 @@ class Game:
         enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
         for spawn in enemy_spawn_data:
             if spawn.properties.get('e_type', 'goomba'):
-                enemy = Goomba(self.screen, None, spawn.x, spawn.y, self.test,
+                enemy = Goomba(self.screen, spawn.x, spawn.y, self.test,
                                self.game_objects['floors'], self.game_objects['collide_objs'],
                                self.game_objects['goomba'], self.game_objects['koopa'])
                 self.game_objects['goomba'].add(enemy)
             else:
-                enemy = Koopa(self.screen, None, spawn.x, spawn.y, self.test,
+                enemy = Koopa(self.screen, spawn.x, spawn.y, self.test,
                               self.game_objects['floors'], self.game_objects['collide_objs'],
                               self.game_objects['goomba'], self.game_objects['koopa'])
             self.map_group.add(enemy)
-            enemy.rect.y += 23
+            enemy.rect.y += 24
 
     def update(self):
         """Update the screen and any objects that require individual updates"""
@@ -179,7 +180,8 @@ class Game:
             self.game_objects['q_blocks'].update()
             self.game_objects['items'].update()
             self.game_objects['coins'].update()
-            self.game_objects['goomba'].update()
+            for goomba in self.game_objects['goomba']:
+                goomba.update()
         self.map_group.draw(self.screen)
         if not self.game_active:
             self.menu.blit()
