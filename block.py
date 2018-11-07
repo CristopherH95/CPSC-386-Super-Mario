@@ -65,6 +65,9 @@ class CoinBlock(Block):
                         hit = True
                         break
             if hit or other is None:    # leave other parameter as None to force hit state (for testing)
+                other.rect.y = self.rect.bottom
+                other.y_vel = 7
+                print('other hit', other)
                 if not self.state['meta'] == CoinBlock.HIT_STATE:
                     self.state['meta'] = CoinBlock.HIT_STATE
                     self.state['move-state'] = CoinBlock.MOVE_UP_STATE
