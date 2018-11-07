@@ -14,6 +14,9 @@ class Block(Sprite):
         self.rect.left, self.rect.top = x, y
         self.screen = screen
 
+    def check_hit(self, other):
+        pass
+
     def blit(self):
         """Blit the block to the screen"""
         self.screen.blit(self.image, self.rect)
@@ -26,13 +29,13 @@ class CoinBlock(Block):
     MOVE_UP_STATE = 'move-up'
     MOVE_DOWN_STATE = 'move-down'
 
-    def __init__(self, x, y, initial_image, screen, map_group, coins=0):
+    def __init__(self, x, y, initial_image, screen, map_group, coins=0, allow_hits=False):
         super(CoinBlock, self).__init__(x, y, initial_image, screen)
         self.coin_counter = int(coins)
         self.blank_img = image.load('map/super-mario-empty-block.png') if self.coin_counter > 0 else None
         self.coins = []
         self.map_group = map_group
-        self.allow_hits = True if self.blank_img is not None else False
+        self.allow_hits = allow_hits
         self.state = {
             'meta': CoinBlock.STD_STATE,
             'move-state': None,
@@ -47,24 +50,21 @@ class CoinBlock(Block):
     @classmethod
     def coin_block_from_tmx_obj(cls, obj, screen, map_group):
         """Create a CoinBlock object from a tmx data object"""
-        return cls(obj.x, obj.y, obj.image, screen, map_group, coins=obj.properties['coins'])
+        return cls(obj.x, obj.y, obj.image, screen, map_group, coins=obj.properties.get('coins', 0),
+                   allow_hits=obj.properties.get('allow_hits', False))
 
     def set_blank(self):
         """Set the block to a blank block, which cannot be hit any longer"""
         self.state['blank'] = True
         self.allow_hits = False
 
-    def check_hit(self, other=None):
+    def check_hit(self, other):
         """Check if the block has been hit in a way that will 'bump' its location"""
         if not self.state['blank'] or self.allow_hits:
             hit = False
-            if other is not None:
-                top_points = [other.rect.topleft, other.rect.midtop, other.rect.topright]
-                for pt in top_points:
-                    if self.rect.collidepoint(pt):
-                        hit = True
-                        break
-            if hit or other is None:    # leave other parameter as None to force hit state (for testing)
+            if self.rect.collidepoint(other.rect.midtop):
+                hit = True
+            if hit:    # leave other parameter as None to force hit state (for testing)
                 other.rect.y = self.rect.bottom
                 other.y_vel = 7
                 print('other hit', other)
@@ -150,14 +150,15 @@ class QuestionBlock(CoinBlock):
             return cls(obj.x, obj.y, screen, map_group, game_objects, item_type, static_img=obj.image)
         return cls(obj.x, obj.y, screen, map_group, game_objects, item_type)
 
-    def check_hit(self, other=None):
-        if self.item:
+    def check_hit(self, other):
+        super(QuestionBlock, self).check_hit(other)
+        if self.item and self.state['meta'] == CoinBlock.HIT_STATE:
             obstacles, floor = self.game_objects['collide_objs'], self.game_objects['floors']
-            if self.item == QuestionBlock.MUSHROOM:
+            if self.item == QuestionBlock.MUSHROOM and not other.state_info['big']:
                 n_item = Mushroom(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
             elif self.item == QuestionBlock.ONE_UP:
                 n_item = OneUp(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
-            elif self.item == QuestionBlock.FIRE_FLOWER:
+            elif self.item == QuestionBlock.FIRE_FLOWER or self.item == QuestionBlock.MUSHROOM:
                 n_item = FireFlower(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
             else:
                 n_item = StarMan(self.rect.x, self.rect.y, obstacles, floor, rise_from=self)
@@ -165,9 +166,6 @@ class QuestionBlock(CoinBlock):
             self.map_group.add(n_item)
             self.item = None
             self.state['blank'] = True
-            super(QuestionBlock, self).check_hit(other)
-        elif self.coin_counter > 0:
-            super(QuestionBlock, self).check_hit(other)
 
     def update(self):
         """Update the question block to its next animated image"""

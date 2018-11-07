@@ -1156,8 +1156,8 @@ class Mario(pg.sprite.Sprite):
         if goomba:
             if self.state_info['invincible']:
                 self.SFX['kick'].play()
-                koopa.kill()
-                koopa.start_death_jump(c.RIGHT)
+                goomba.kill()
+                goomba.start_death_jump(c.RIGHT)
                 self.sprites_about_to_die_group.add(goomba)
             elif self.state_info['big']:
                 self.SFX['pipe'].play()

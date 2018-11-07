@@ -112,10 +112,10 @@ class Game:
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
         for block in block_data:
-            if 'coins' in block.properties:
+            if not block.properties.get('pipe', False):
                 b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group)
             else:
-                b_sprite = CoinBlock(block.x, block.y, block.image, self.screen, self.map_group, coins=0)
+                b_sprite = Block(block.x, block.y, block.image, self.screen)
             self.map_group.add(b_sprite)    # draw using this group
             self.game_objects['blocks'].add(b_sprite)       # check collisions using this group
             self.game_objects['collide_objs'].add(b_sprite)
