@@ -3,6 +3,7 @@ from event_loop import EventLoop
 from block import Block, CoinBlock, QuestionBlock
 from pipe import Pipe
 from coin import Coin
+from decoration import Decoration
 from maps import load_world_map
 from mario import Mario
 from enemy import Goomba, Koopa
@@ -104,13 +105,13 @@ class Game:
             'goomba': pygame.sprite.Group(),
             'win-zone': []
         }
-        floor_data = self.tmx_data.get_layer_by_name('walls')
-        block_data = self.tmx_data.get_layer_by_name('blocks')
-        q_block_data = self.tmx_data.get_layer_by_name('q-blocks')
-        pipe_data = self.tmx_data.get_layer_by_name('pipes')
+        floor_data = self.retrieve_map_data('walls')
+        block_data = self.retrieve_map_data('blocks')
+        q_block_data = self.retrieve_map_data('q-blocks')
+        pipe_data = self.retrieve_map_data('pipes')
         coin_data = self.retrieve_map_data('coins')
-        flag_data = self.tmx_data.get_layer_by_name('flag')
-        # enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
+        flag_data = self.retrieve_map_data('flag')
+        background = self.retrieve_map_data('decorations')
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
             print(str(obj.y))
@@ -144,6 +145,8 @@ class Game:
             else:
                 self.game_objects['win-zone'].append(pygame.Rect(flag_part.x, flag_part.y,
                                                                  flag_part.width, flag_part.height))
+        for bg in background:
+            self.map_group.add(Decoration(bg.x, bg.y, bg.image))
 
     def prep_enemies(self):
         """Prepare the enemy sprites"""
@@ -178,10 +181,12 @@ class Game:
                 points = block.check_hit(other=self.mario)
                 if points:
                     self.score += points
+                    self.coins += 1
             for q_block in self.game_objects['q_blocks']:
                 points = q_block.check_hit(other=self.mario)
                 if points:
                     self.score += points
+                    self.coins += 1
             self.game_objects['blocks'].update()
             self.game_objects['rubble'].update()
             self.mario.update(pygame.key.get_pressed())  # update and check if not touching any walls
