@@ -1,3 +1,5 @@
+Project Members : Cristopher Hernandez, Alexis Garcia, Joseph Chau
+
 # CPSC-386-Super-Mario
 Super Mario Project for CPSC-386
 
@@ -6,8 +8,6 @@ To install required dependencies run:
 pip install -r requirements.txt
 ```
 In the location you have cloned the repository
-
-Project Members : Cristopher Hernandez, Alexis Garcia, Joseph Chau
 
 Trello : https://trello.com/b/8FGbcYOA/cpsc-386-super-mario
 
