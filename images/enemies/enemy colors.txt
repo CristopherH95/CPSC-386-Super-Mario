@@ -1,0 +1,34 @@
+Koopa Troopa (Green) Colors
+Shell Color
+#ea9e22
+Shell Light Color
+#10c000
+Shell Sepearation
+#ea9e22
+Shell 
+#ffffff
+Shine
+#9eff93
+Shine Middle
+#efffed
+Eye Color
+#00FFFF
+Skin
+#d2d208
+Nose
+#b7b721
+Nostril
+#9d9d1d
+
+Goomba
+Skin Top
+#c84c0c
+Skin Bottom
+#fcbcb0
+Feet
+#000000
+Eyes
+#ffffff
+#000000
+Brow
+#000000
