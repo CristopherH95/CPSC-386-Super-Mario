@@ -69,15 +69,15 @@ STAR = 'star'
 FIREFLOWER = 'fireflower'
 COIN = 'coin'
 
-#BRICK STATES
+# BRICK STATES
 
 RESTING = 'resting'
 BUMPED = 'bumped'
 
-#COIN STATES
+# COIN STATES
 OPENED = 'opened'
 
-#LIST of ENEMIES
+# LIST of ENEMIES
 
 GOOMBA = 'goomba'
 KOOPA = 'koopa'
