@@ -60,7 +60,7 @@ class Game:
         self.lives = 3
         self.coins = 0
         self.init_world_1()
-        self.mario = Mario(self.game_objects, self.map_layer, self.screen)   # test sprite for player location
+        self.mario = Mario(self.game_objects, self.map_layer, self.map_group, self.screen)   # test sprite for player location
         self.prep_enemies()
         self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
         self.map_layer.center((self.mario.rect.x, self.mario.rect.y))   # center camera
@@ -71,6 +71,7 @@ class Game:
         # action map for event loop
         self.paused = False
         self.game_active = False
+        self.game_won = False
         self.menu = Menu(self.screen)
         self.action_map = {pygame.KEYDOWN: self.set_paused}
         print(self.map_layer.view_rect.center)
@@ -88,6 +89,15 @@ class Game:
         self.tmx_data, self.map_layer, self.map_group = load_world_map('map/world1.tmx', self.screen)
         self.player_spawn = self.tmx_data.get_object_by_name('player')  # get player spawn object from map data
         self.init_game_objects()
+
+    def check_stage_clear(self):
+        """Check if Mario has cleared the stage"""
+        for rect in self.game_objects['win-zone']:
+            if rect.colliderect(self.mario.rect):
+                pygame.mixer.music.load('audio/End-Clear-Stage.wav')
+                pygame.mixer.music.play()
+                self.mario.flag_pole_sliding()
+                self.game_won = True
 
     def init_game_objects(self):
         """Create all game objects in memory by extracting them from the map file"""
@@ -114,7 +124,7 @@ class Game:
         background = self.retrieve_map_data('decorations')
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-            print(str(obj.y))
+            # print(str(obj.y))
         for block in block_data:
             if not block.properties.get('pipe', False):
                 b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group, self.game_objects)
@@ -190,7 +200,8 @@ class Game:
             self.game_objects['blocks'].update()
             self.game_objects['rubble'].update()
             self.mario.update(pygame.key.get_pressed())  # update and check if not touching any walls
-            print(self.mario.rect.x, self.mario.rect.y)
+            self.check_stage_clear()
+            # print(self.mario.rect.x, self.mario.rect.y)
             self.game_objects['q_blocks'].update()
             self.game_objects['items'].update()
             self.game_objects['coins'].update()
@@ -250,6 +261,9 @@ class Game:
             self.update()
             if self.mario.state_info['death_finish']:
                 self.handle_player_killed()
+            elif not pygame.mixer.music.get_busy() and self.game_won:
+                self.menu.high_score.save(self.score)
+                self.game_active = False
             elif not pygame.mixer.music.get_busy() and self.mario.state_info['dead']:
                 pygame.mixer.music.load('audio/Mario-Die.wav')
                 pygame.mixer.music.play()

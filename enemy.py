@@ -47,13 +47,18 @@ class Enemy(Sprite):
     def check_player_collision(self):
         """Checks collisions with Mario"""
         if self.rect.colliderect(self.player.rect):
-            pt = self.rect.midtop
-            if self.rect.collidepoint(pt) and self.rect.left < self.player.rect.centerx < self.rect.right:
-                self.player_enemy_kill = True
-                self.last_frame = pygame.time.get_ticks()
-                self.shell_mode = True
+            pts = [self.rect.topleft, self.rect.midtop, self.rect.topright]
+            for pt in pts:
+                if self.rect.collidepoint(pt) and self.rect.left < self.player.rect.centerx < self.rect.right:
+                    self.set_killed()
             self.enemy_player_collide_flag = True
             return True
+
+    def set_killed(self):
+        """Set the enemy's status to killed by the player"""
+        self.player_enemy_kill = True
+        self.last_frame = pygame.time.get_ticks()
+        self.shell_mode = True
 
     def check_block_collision(self):
         # Check if colliding with map (i.e pipe) or dying from block
@@ -158,8 +163,9 @@ class Goomba(Enemy):
         if not self.check_floor() and self.start_movement:
             self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_GRAVITY)
             self.rect.x = self.rect.x + (self.ENEMY_DIRECTION * (self.ENEMY_SPEED - 1))
-        if self.check_floor() and self.start_movement:
-            self.rect.x = self.rect.x + (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
+        if not self.player_enemy_kill:
+            if self.check_floor() and self.start_movement:
+                self.rect.x = self.rect.x + (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
 
         # print('Player ' + str(self.check_player_collision()))
         # print('Block ' + str(self.check_block_collision()))
