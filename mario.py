@@ -394,13 +394,11 @@ class Mario(pg.sprite.Sprite):
         self.state = c.WALK
         self.map_layer = map_layer
         self.game_objects = game_objects
+        self.left_bound = 0
+        self.screen_shift = 0
 
     def update(self, keys):
         """Updates Mario's states and animations once per frame"""
-        # print(self.state)
-        # print('x_vel, y_vel: ', self.x_vel, self.y_vel)
-        # print(self.state)
-        # print(self.state_info)
         self.handle_state(keys)
         if not self.state == c.DEATH_JUMP:
             self.check_for_special_state()
@@ -415,7 +413,6 @@ class Mario(pg.sprite.Sprite):
             if self.rect.top > self.screen.get_height():
                 self.start_death_jump()
             self.fireball_controller.update_fireballs()
-        print(self.image)
 
     def check_fall(self):
         """Check if falling, apply gravity if so"""
@@ -1103,13 +1100,15 @@ class Mario(pg.sprite.Sprite):
     def check_wall(self):
         """Check if Mario is attempting to walk through a wall"""
         for obj in self.game_objects['collide_objs']:
-            pts = [obj.rect.midleft, obj.rect.bottomleft, obj.rect.midright, obj.rect.bottomright]
+            pts = [obj.rect.midleft, obj.rect.midright]
             for pt in pts:
                 if self.rect.collidepoint(pt):
+                    print('collide obj')
+                    print(obj.rect.x, obj.rect.y)
                     if obj.rect.right > self.rect.right:
-                        self.rect.x -= int(obj.rect.width * 0.25)
+                        self.rect.right = obj.rect.left
                     else:
-                        self.rect.x += int(obj.rect.width * 0.25)
+                        self.rect.left = obj.rect.right + 1
                     return True
         return False
 

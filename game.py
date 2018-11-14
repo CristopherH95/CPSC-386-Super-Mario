@@ -59,8 +59,8 @@ class Game:
         self.score = 0
         self.lives = 3
         self.coins = 0
-        self.init_world_1()
-        self.mario = Mario(self.game_objects, self.map_layer, self.map_group, self.screen)   # test sprite for player location
+        self.init_world()
+        self.mario = Mario(self.game_objects, self.map_layer, self.map_group, self.screen)
         self.prep_enemies()
         self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
         self.map_layer.center((self.mario.rect.x, self.mario.rect.y))   # center camera
@@ -84,11 +84,22 @@ class Game:
             data = []
         return data
 
-    def init_world_1(self):
+    def init_world(self, map_name='world1'):
         """Load the initial world for the game"""
-        self.tmx_data, self.map_layer, self.map_group = load_world_map('map/world1.tmx', self.screen)
+        self.tmx_data, self.map_layer, self.map_group = load_world_map('map/' + map_name + '.tmx', self.screen)
         self.player_spawn = self.tmx_data.get_object_by_name('player')  # get player spawn object from map data
         self.init_game_objects()
+        self.map_layer.center((self.player_spawn.x, self.player_spawn.y))
+        self.map_layer.zoom = 0.725  # camera zoom
+
+    def handle_pipe(self):
+        """Handle Mario traveling through a pipe"""
+        if pygame.K_DOWN in pygame.key.get_pressed():
+            for pipe in self.game_objects['pipes']:
+                if (pipe.destination and
+                        self.mario.rect.left >= pipe.rect.left and self.mario.rect.right <= pipe.rect.right):
+                    self.init_world(map_name=pipe.destination)
+                    self.mario.x, self.mario.y = self.player_spawn.x, self.player_spawn.y
 
     def check_stage_clear(self):
         """Check if Mario has cleared the stage"""
@@ -224,13 +235,11 @@ class Game:
         """Handle the player being killed in game"""
         self.lives -= 1
         if self.lives > 0:
-            self.init_world_1()
+            self.init_world()
             self.map_group.add(self.mario)
             self.prep_enemies()
             self.mario.reset(self.map_layer, self.game_objects)
-            self.map_layer.center((self.player_spawn.x, self.player_spawn.y))
             self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
-            self.map_layer.zoom = 0.725  # camera zoom
         else:
             self.game_active = False
 
@@ -246,7 +255,7 @@ class Game:
                 self.start_game()
                 self.menu.start = False
                 self.game_active = False
-                self.init_world_1()
+                self.init_world()
 
     def start_game(self):
         """Launch the game and begin checking for events"""
