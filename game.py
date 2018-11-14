@@ -54,7 +54,7 @@ class Game:
         self.map_group = None
         self.player_spawn = None
         self.mario = None
-        self.timer = 400
+        self.timer = None
         self.last_tick = 0
         self.score = 0
         self.lives = 3
@@ -84,22 +84,38 @@ class Game:
             data = []
         return data
 
-    def init_world(self, map_name='world1'):
+    def init_world(self, map_name='world1', spawn='player'):
         """Load the initial world for the game"""
         self.tmx_data, self.map_layer, self.map_group = load_world_map('map/' + map_name + '.tmx', self.screen)
-        self.player_spawn = self.tmx_data.get_object_by_name('player')  # get player spawn object from map data
+        self.player_spawn = self.tmx_data.get_object_by_name(spawn)  # get player spawn object from map data
         self.init_game_objects()
         self.map_layer.center((self.player_spawn.x, self.player_spawn.y))
         self.map_layer.zoom = 0.725  # camera zoom
+        if self.mario:
+            self.map_group.add(self.mario)
+            self.prep_enemies()
+            self.mario.reset(self.map_layer, self.game_objects)
+            self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
 
     def handle_pipe(self):
         """Handle Mario traveling through a pipe"""
-        if pygame.K_DOWN in pygame.key.get_pressed():
+        keys_pressed = pygame.key.get_pressed()
+        if keys_pressed[pygame.K_DOWN] is 1:
             for pipe in self.game_objects['pipes']:
                 if (pipe.destination and
                         self.mario.rect.left >= pipe.rect.left and self.mario.rect.right <= pipe.rect.right):
-                    self.init_world(map_name=pipe.destination)
+                    self.init_world(map_name=pipe.destination, spawn=pipe.spawn)
                     self.mario.x, self.mario.y = self.player_spawn.x, self.player_spawn.y
+                    pygame.mixer.music.load('audio/' + str(pipe.music))
+                    pygame.mixer.music.play(-1)
+        elif keys_pressed[pygame.K_RIGHT] is 1:
+            for pipe in self.game_objects['pipes']:
+                if (pipe.destination and pipe.horiz and self.mario.rect.right >= pipe.rect.left and
+                        self.mario.rect.top >= pipe.rect.top and self.mario.rect.bottom <= pipe.rect.bottom):
+                    self.init_world(map_name=pipe.destination, spawn=pipe.spawn)
+                    self.mario.x, self.mario.y = self.player_spawn.x, self.player_spawn.y
+                    pygame.mixer.music.load('audio/' + str(pipe.music))
+                    pygame.mixer.music.play(-1)
 
     def check_stage_clear(self):
         """Check if Mario has cleared the stage"""
@@ -135,7 +151,6 @@ class Game:
         background = self.retrieve_map_data('decorations')
         for obj in floor_data:  # walls represented as pygame Rects
             self.game_objects['floors'].append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
-            # print(str(obj.y))
         for block in block_data:
             if not block.properties.get('pipe', False):
                 b_sprite = CoinBlock.coin_block_from_tmx_obj(block, self.screen, self.map_group, self.game_objects)
@@ -173,7 +188,7 @@ class Game:
         """Prepare the enemy sprites"""
         # may not be necessary if passing game_objects dictionary as a whole
         #  to Mario instead of passing individual groups
-        enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
+        enemy_spawn_data = self.retrieve_map_data('enemy-spawns')
         for spawn in enemy_spawn_data:
             if spawn.properties.get('e_type', 'goomba') == 'goomba':
                 enemy = Goomba(self.screen, spawn.x, spawn.y, self.mario,
@@ -208,9 +223,16 @@ class Game:
                 if points:
                     self.score += points
                     self.coins += 1
+            for coin in self.game_objects['coins']:
+                if pygame.sprite.collide_rect(coin, self.mario):
+                    self.score += coin.points
+                    self.coins += 1
+                    self.mario.SFX['coin'].play()
+                    coin.kill()
             self.game_objects['blocks'].update()
             self.game_objects['rubble'].update()
             self.mario.update(pygame.key.get_pressed())  # update and check if not touching any walls
+            self.handle_pipe()
             self.check_stage_clear()
             # print(self.mario.rect.x, self.mario.rect.y)
             self.game_objects['q_blocks'].update()
@@ -225,9 +247,11 @@ class Game:
             self.stats.blit()
             if not self.paused:
                 time = pygame.time.get_ticks()
-                if time - self.last_tick > 600 and self.timer is not 0:
+                if time - self.last_tick > 600 and self.timer > 0:
                     self.last_tick = time
                     self.timer -= 1
+                elif self.timer <= 0 and not self.mario.state_info['dead']:
+                    self.mario.start_death_jump()
             self.stats.update(str(self.score), str(self.coins), str('1-1'), str(self.timer), str(self.lives))
         pygame.display.flip()
 
@@ -236,10 +260,7 @@ class Game:
         self.lives -= 1
         if self.lives > 0:
             self.init_world()
-            self.map_group.add(self.mario)
-            self.prep_enemies()
-            self.mario.reset(self.map_layer, self.game_objects)
-            self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
+            self.timer = 400
         else:
             self.game_active = False
 
@@ -252,9 +273,11 @@ class Game:
             self.update()
             if self.menu.start:
                 self.game_active = True
+                self.timer = 400
                 self.start_game()
                 self.menu.start = False
                 self.game_active = False
+                self.game_won = False
                 self.init_world()
 
     def start_game(self):
@@ -277,7 +300,7 @@ class Game:
                 pygame.mixer.music.load('audio/Mario-Die.wav')
                 pygame.mixer.music.play()
             elif not pygame.mixer.music.get_busy() and not self.paused:
-                pygame.mixer.music.load('music/main_theme.ogg')
+                pygame.mixer.music.load('audio/BG-Main.wav')
                 pygame.mixer.music.play(-1)
 
 

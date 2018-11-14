@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.0" orientation="orthogonal" renderorder="right-down" width="269" height="21" tilewidth="32" tileheight="32" infinite="0" nextlayerid="168" nextobjectid="247">
+<map version="1.2" tiledversion="1.2.1" orientation="orthogonal" renderorder="right-down" width="269" height="21" tilewidth="32" tileheight="32" infinite="0" nextlayerid="168" nextobjectid="247">
  <tileset firstgid="1" source="Super-Mario.tsx"/>
  <layer id="163" name="background" width="269" height="21">
   <data encoding="base64">
@@ -14,7 +14,9 @@
   <object id="80" name="pipe3" gid="17" x="1952" y="512" width="64" height="64"/>
   <object id="82" name="pipe4" gid="17" x="2240" y="512" width="64" height="64">
    <properties>
-    <property name="destination" value="world1_under.tmx"/>
+    <property name="destination" value="world1_under"/>
+    <property name="music" value="BG-Underground.wav"/>
+    <property name="spawn" value="player"/>
    </properties>
   </object>
  </objectgroup>
