@@ -8,6 +8,7 @@ from maps import load_world_map
 from mario import Mario
 from enemy import Goomba, Koopa
 from title import Menu
+from item import Item
 from game_stats import GameStats
 import pygame
 
@@ -55,10 +56,15 @@ class Game:
         self.player_spawn = None
         self.mario = None
         self.timer = None
+        self.time_warn = None
         self.last_tick = 0
         self.score = 0
         self.lives = 3
         self.coins = 0
+        self.SFX = {
+            '1-up': pygame.mixer.Sound('audio/1-Up.wav'),
+            'warning': pygame.mixer.Sound('audio/Time-Warning.wav')
+        }
         self.init_world()
         self.mario = Mario(self.game_objects, self.map_layer, self.map_group, self.screen)
         self.prep_enemies()
@@ -84,7 +90,7 @@ class Game:
             data = []
         return data
 
-    def init_world(self, map_name='world1', spawn='player'):
+    def init_world(self, map_name='world1', spawn='player', reset=True):
         """Load the initial world for the game"""
         self.tmx_data, self.map_layer, self.map_group = load_world_map('map/' + map_name + '.tmx', self.screen)
         self.player_spawn = self.tmx_data.get_object_by_name(spawn)  # get player spawn object from map data
@@ -94,7 +100,7 @@ class Game:
         if self.mario:
             self.map_group.add(self.mario)
             self.prep_enemies()
-            self.mario.reset(self.map_layer, self.game_objects)
+            self.mario.reset(self.map_layer, self.game_objects, reset)
             self.mario.rect.x, self.mario.rect.y = self.player_spawn.x, self.player_spawn.y
 
     def handle_pipe(self):
@@ -104,15 +110,15 @@ class Game:
             for pipe in self.game_objects['pipes']:
                 if (pipe.destination and
                         self.mario.rect.left >= pipe.rect.left and self.mario.rect.right <= pipe.rect.right):
-                    self.init_world(map_name=pipe.destination, spawn=pipe.spawn)
+                    self.init_world(map_name=pipe.destination, spawn=pipe.spawn, reset=False)
                     self.mario.x, self.mario.y = self.player_spawn.x, self.player_spawn.y
                     pygame.mixer.music.load('audio/' + str(pipe.music))
                     pygame.mixer.music.play(-1)
         elif keys_pressed[pygame.K_RIGHT] is 1:
             for pipe in self.game_objects['pipes']:
                 if (pipe.destination and pipe.horiz and self.mario.rect.right >= pipe.rect.left and
-                        self.mario.rect.top >= pipe.rect.top and self.mario.rect.bottom <= pipe.rect.bottom):
-                    self.init_world(map_name=pipe.destination, spawn=pipe.spawn)
+                        self.mario.rect.bottom <= pipe.rect.bottom):
+                    self.init_world(map_name=pipe.destination, spawn=pipe.spawn, reset=False)
                     self.mario.x, self.mario.y = self.player_spawn.x, self.player_spawn.y
                     pygame.mixer.music.load('audio/' + str(pipe.music))
                     pygame.mixer.music.play(-1)
@@ -194,11 +200,11 @@ class Game:
                 enemy = Goomba(self.screen, spawn.x, spawn.y, self.mario,
                                self.game_objects['floors'], self.game_objects['collide_objs'],
                                self.game_objects['goomba'], self.game_objects['koopa'])
-                self.game_objects['goomba'].add(enemy)
             else:
                 enemy = Koopa(self.screen, spawn.x, spawn.y, self.mario,
                               self.game_objects['floors'], self.game_objects['collide_objs'],
                               self.game_objects['goomba'], self.game_objects['koopa'])
+            self.game_objects['goomba'].add(enemy)
             self.map_group.add(enemy)
             enemy.rect.y += 24
 
@@ -231,6 +237,11 @@ class Game:
                     coin.kill()
             self.game_objects['blocks'].update()
             self.game_objects['rubble'].update()
+            one_up_check = pygame.sprite.spritecollideany(self.mario, self.game_objects['items'])
+            if one_up_check and one_up_check.item_type == Item.ONE_UP:
+                self.lives += 1
+                self.SFX['1-up'].play()
+                one_up_check.kill()
             self.mario.update(pygame.key.get_pressed())  # update and check if not touching any walls
             self.handle_pipe()
             self.check_stage_clear()
@@ -245,15 +256,22 @@ class Game:
             self.menu.blit()
         if self.game_active:
             self.stats.blit()
-            if not self.paused:
-                time = pygame.time.get_ticks()
-                if time - self.last_tick > 600 and self.timer > 0:
-                    self.last_tick = time
-                    self.timer -= 1
-                elif self.timer <= 0 and not self.mario.state_info['dead']:
-                    self.mario.start_death_jump()
-            self.stats.update(str(self.score), str(self.coins), str('1-1'), str(self.timer), str(self.lives))
+            self.check_timer()
         pygame.display.flip()
+
+    def check_timer(self):
+        """Check the game timer and update it if necessary"""
+        if not self.paused:
+            time = pygame.time.get_ticks()
+            if time - self.last_tick > 600 and self.timer > 0:
+                self.last_tick = time
+                self.timer -= 1
+            elif self.timer <= 100 and not self.time_warn:
+                self.time_warn = True
+                self.SFX['warning'].play()
+            elif self.timer <= 0 and not self.mario.state_info['dead']:
+                self.mario.start_death_jump()
+        self.stats.update(str(self.score), str(self.coins), str('1-1'), str(self.timer), str(self.lives))
 
     def handle_player_killed(self):
         """Handle the player being killed in game"""
@@ -274,6 +292,7 @@ class Game:
             if self.menu.start:
                 self.game_active = True
                 self.timer = 400
+                self.time_warn = False
                 self.start_game()
                 self.menu.start = False
                 self.game_active = False
