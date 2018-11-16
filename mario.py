@@ -94,6 +94,8 @@ class Mario(pg.sprite.Sprite):
             'down': pg.K_DOWN
         }
 
+        self.score = 0
+
     def setup_timers(self):
         """Sets up timers for animations"""
         self.timers['walking'] = 0

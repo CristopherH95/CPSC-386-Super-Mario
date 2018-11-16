@@ -56,6 +56,7 @@ class Enemy(Sprite):
 
     def set_killed(self):
         """Set the enemy's status to killed by the player"""
+        self.player.score += 100
         self.player_enemy_kill = True
         self.last_frame = pygame.time.get_ticks()
         self.shell_mode = True

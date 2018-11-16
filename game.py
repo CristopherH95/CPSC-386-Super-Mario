@@ -275,7 +275,8 @@ class Game:
                 self.SFX['warning'].play()
             elif self.timer <= 0 and not self.mario.state_info['dead']:
                 self.mario.start_death_jump()
-        self.stats.update(str(self.score), str(self.coins), str('1-1'), str(self.timer), str(self.lives))
+        score = self.score + self.mario.score
+        self.stats.update(str(score), str(self.coins), str('1-1'), str(self.timer), str(self.lives))
 
     def handle_player_killed(self):
         """Handle the player being killed in game"""
