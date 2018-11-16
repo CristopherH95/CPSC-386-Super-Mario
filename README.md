@@ -9,10 +9,12 @@ pip install -r requirements.txt
 ```
 In the location you have cloned the repository
 
-Trello : https://trello.com/b/8FGbcYOA/cpsc-386-super-mario
+Trello : (https://trello.com/b/8FGbcYOA/cpsc-386-super-mario)
 
 Some map sprites are used courtesy of (http://www.videogamesprites.net/SuperMarioBros1/)
+    specifically for:
+        bushes, clouds, hills, pipe tops (not pieces)
 
-Logo image retrieved from: https://commons.wikimedia.org/wiki/File:Super_Mario_Bros._Logo.svg
-
-Sounds obtained from: https://themushroomkingdom.net/media/smb/wav
+Sounds obtained from: (https://themushroomkingdom.net/media/smb/wav)
+Starman Theme from: 
+    (https://archive.org/details/SuperMarioBrosNESMusicHurriedOverworld/Super+Mario+Bros+(NES)+Music+-+Star+Theme.mp3)

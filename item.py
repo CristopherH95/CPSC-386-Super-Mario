@@ -1,7 +1,7 @@
 from animate import Animator
-from pygame.sprite import Sprite, Group
+from pygame.sprite import Sprite, Group, collide_rect
 from pygame import image as pygimg
-from pygame import time
+from pygame import time, transform
 # TODO: Additional item types
 
 
@@ -157,7 +157,7 @@ class StarMan(Item):
 
 class FireBall(Sprite):
     """A fireball which can be thrown from Mario when he is in his fire flower state"""
-    def __init__(self, x, y, norm_images, explode_images, obstacles, floor, speed=5):
+    def __init__(self, x, y, norm_images, explode_images, obstacles, floor, goomba, koopa, speed=5):
         self.norm_animator = Animator(norm_images)
         self.explode_animator = Animator(explode_images, repeat=False)
         self.image = self.norm_animator.get_image()
@@ -165,6 +165,7 @@ class FireBall(Sprite):
         self.rect.x, self.rect.y = x, y
         self.obstacles = obstacles
         self.floor = floor
+        self.goomba, self.koopa = goomba, koopa
         self.speed_x = speed
         self.speed_y = speed
         self.active = True
@@ -179,11 +180,24 @@ class FireBall(Sprite):
                     self.active = False
                     return
         for flr_rect in self.floor:
-            pts = [flr_rect.rect.midleft, flr_rect.rect.midright, flr_rect.rect.bottomleft, flr_rect.rect.bottomright]
+            pts = [flr_rect.midleft, flr_rect.midright, flr_rect.bottomleft, flr_rect.bottomright]
             for pt in pts:
                 if self.rect.collidepoint(pt):
                     self.active = False
                     return
+
+    def check_hit_enemies(self):
+        """Check if the fireball has hit any enemies"""
+        for g_enemy in self.goomba:
+            if collide_rect(self, g_enemy):     # FIXME: change kill() when animation works
+                g_enemy.kill()
+                self.active = False
+                return
+        for k_enemy in self.koopa:
+            if collide_rect(self, k_enemy):
+                k_enemy.kill()
+                self.active = False
+                return
 
     def apply_gravity(self):
         """Apply gravity to the fireball, bounce off of horizontal side of surfaces"""
@@ -210,11 +224,12 @@ class FireBall(Sprite):
 
     def update(self):
         """Update the position of the fireball"""
-        self.rect.x += self.speed_x
-        self.apply_gravity()
         if self.active:
+            self.rect.x += self.speed_x
+            self.apply_gravity()
             self.image = self.norm_animator.get_image()
             self.check_hit_wall()
+            self.check_hit_enemies()
         elif self.explode_animator.is_animation_done():
             self.kill()
         else:
@@ -223,28 +238,31 @@ class FireBall(Sprite):
 
 class FireBallController:
     """Manages fireballs and provides an interface for using them"""
-    def __init__(self, screen, map_group, obstacles, floor, origin):
+    def __init__(self, screen, map_group, obstacles, floor, origin, goomba, koopa):
         self.screen = screen
         self.origin = origin
         self.map_group = map_group
         self.obstacles = obstacles
         self.floor = floor
+        self.goomba, self.koopa = goomba, koopa
         self.fireballs = Group()
         self.fb_images = [pygimg.load('map/super_mario_fireball_1.png'), pygimg.load('map/super_mario_fireball_2.png'),
                           pygimg.load('map/super_mario_fireball_3.png'), pygimg.load('map/super_mario_fireball_4.png')]
         self.exp_images = [pygimg.load('map/super_mario_fireball_explode_1.png'),
                            pygimg.load('map/super_mario_fireball_explode_2.png'),
                            pygimg.load('map/super_mario_fireball_explode_3.png')]
+        self.fb_images = [transform.scale(img, (16, 16)) for img in self.fb_images]
+        self.exp_images = [transform.scale(img, (16, 16)) for img in self.exp_images]
 
     def throw_fireball(self):
         """If there are not two fireballs already active, then throw a new fireball"""
         if len(self.fireballs) < 2:
             if self.origin.state_info['facing_right']:
-                n_fireball = FireBall(self.origin.rect.x + 1, self.origin.rect.topright, self.fb_images,
-                                      self.exp_images, self.obstacles, self.floor)
+                n_fireball = FireBall(self.origin.rect.topright[0], self.origin.rect.topright[1], self.fb_images,
+                                      self.exp_images, self.obstacles, self.floor, self.goomba, self.koopa)
             else:
-                n_fireball = FireBall(self.origin.rect.x - 1, self.origin.rect.topleft, self.fb_images, self.exp_images,
-                                      self.obstacles, self.floor, speed=-5)
+                n_fireball = FireBall(self.origin.rect.topleft[0], self.origin.rect.topleft[1], self.fb_images,
+                                      self.exp_images, self.obstacles, self.floor, self.goomba, self.koopa, speed=-5)
             self.fireballs.add(n_fireball)
             self.map_group.add(n_fireball)
             return True
@@ -254,6 +272,8 @@ class FireBallController:
         """Update all fireballs currently in play"""
         self.fireballs.update()
         for fb in self.fireballs:
-            if fb.rect.x < 0 or fb.rect.x > self.screen.get_width() or \
-                    (fb.rect.y < 0 or fb.rect.y > self.screen.get_height()):
+            if fb.rect.x < (self.origin.rect.x - self.screen.get_width()) or \
+                fb.rect.x > (self.origin.rect.x + self.screen.get_width()) or \
+                    (fb.rect.y < (self.origin.rect.y - self.screen.get_height()) or
+                     fb.rect.y > (self.origin.rect.y + self.screen.get_height())):
                 fb.kill()

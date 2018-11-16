@@ -1,11 +1,10 @@
 from item import Item, FireBallController
 import pygame as pg
 import constants as c
-import tools
 
 
 class Mario(pg.sprite.Sprite):
-    def __init__(self, game_objects, map_layer, screen):
+    def __init__(self, game_objects, map_layer, map_group, screen):
         pg.sprite.Sprite.__init__(self)
         self.sprite_sheet = pg.image.load('images/mario_bros.png')
         if self.sprite_sheet.get_alpha():
@@ -13,14 +12,16 @@ class Mario(pg.sprite.Sprite):
         else:
             self.sprite_sheet = self.sprite_sheet.convert()
             self.sprite_sheet.set_colorkey((255, 0, 255))
-        self.SFX = tools.load_all_sfx('sounds')
+        self.SFX = None
+        self.load_sounds()
         self.game_objects = game_objects
         self.map_layer = map_layer
         self.screen = screen
         self.screen_rect = self.screen.get_rect()
         # fireball controller allows the throwing of fireballs when possible
-        self.fireball_controller = FireBallController(screen, map_layer,
-                                                      game_objects['collide_objs'], game_objects['floors'], self)
+        self.fireball_controller = FireBallController(screen, map_group,
+                                                      game_objects['collide_objs'], game_objects['floors'], self,
+                                                      goomba=game_objects['goomba'], koopa=game_objects['koopa'])
         self.screen_shift = 0
         self.left_bound = 0
         self.timers = {}
@@ -85,6 +86,15 @@ class Mario(pg.sprite.Sprite):
         self.mask = pg.mask.from_surface(self.image)
 
         self.key_timer = 0
+        self.keybinding = {
+            'action': pg.K_LSHIFT,
+            'jump': pg.K_SPACE,
+            'left': pg.K_LEFT,
+            'right': pg.K_RIGHT,
+            'down': pg.K_DOWN
+        }
+
+        self.score = 0
 
     def setup_timers(self):
         """Sets up timers for animations"""
@@ -132,6 +142,19 @@ class Mario(pg.sprite.Sprite):
         self.fire_transition_index = 0
         self.fireball_count = 0
         self.flag_pole_right = 0
+
+    def load_sounds(self):
+        """Load all Mario sound effects into a dictionary for later playback"""
+        self.SFX = {
+            'big_jump': pg.mixer.Sound('audio/Big-Mario-Jump.wav'),
+            'coin': pg.mixer.Sound('audio/Coin.wav'),
+            'small_jump': pg.mixer.Sound('audio/Small-Mario-Jump.wav'),
+            'fireball': pg.mixer.Sound('audio/Fireball.wav'),
+            'kick': pg.mixer.Sound('audio/Mario-Kick-Shell.wav'),
+            'stomp': pg.mixer.Sound('audio/Mario-Stomp.wav'),
+            'powerup': pg.mixer.Sound('audio/Get-Powerup.wav'),
+            'shrink': pg.mixer.Sound('audio/Mario-Shrink.wav')
+        }
 
     def load_images_from_sheet(self):
         """Extracts Mario images from his sprite sheet and assigns
@@ -387,29 +410,32 @@ class Mario(pg.sprite.Sprite):
                                     int(rect.height * c.SIZE_MULTIPLIER)))
         return image
 
-    def reset(self, map_layer, game_objects):
+    def reset(self, map_layer, game_objects, reset_booleans=True):
         """Reset states back to original"""
-        self.setup_state_booleans()
+        if reset_booleans:
+            self.setup_state_booleans()
         self.state = c.WALK
         self.map_layer = map_layer
         self.game_objects = game_objects
+        self.left_bound = 0
+        self.screen_shift = 0
 
     def update(self, keys):
         """Updates Mario's states and animations once per frame"""
-        # print(self.state)
-        # print('x_vel, y_vel: ', self.x_vel, self.y_vel)
         self.handle_state(keys)
         if not self.state == c.DEATH_JUMP:
             self.check_for_special_state()
             self.animation()
-            self.check_fall()
-            self.adjust_mario_position()
+            if self.state not in (c.SMALL_TO_BIG, c.BIG_TO_FIRE, c.BIG_TO_SMALL):
+                self.check_fall()
+                self.adjust_mario_position()
             if self.rect.right > self.screen_shift:
                 self.screen_shift = self.rect.right + 1
                 self.left_bound = self.rect.right - int(self.screen_rect.width * 0.45)
                 self.map_layer.center((self.rect.centerx, self.rect.centery))
             if self.rect.top > self.screen.get_height():
                 self.start_death_jump()
+            self.fireball_controller.update_fireballs()
 
     def check_fall(self):
         """Check if falling, apply gravity if so"""
@@ -446,8 +472,6 @@ class Mario(pg.sprite.Sprite):
             self.walking(keys)
         elif self.state == c.JUMP:
             self.jumping(keys)
-        # elif self.state == c.FALL:
-        #     self.falling(keys)
         elif self.state == c.DEATH_JUMP:
             self.jumping_to_death()
         elif self.state == c.SMALL_TO_BIG:
@@ -472,22 +496,22 @@ class Mario(pg.sprite.Sprite):
 
         self.frame_index = 0
 
-        if keys[tools.keybinding['action']]:
+        if keys[self.keybinding['action']]:
             if self.state_info['fire'] and self.state_info['allow_fireball']:
                 self.shoot_fireball()
 
-        if keys[tools.keybinding['down']]:
+        if keys[self.keybinding['down']]:
             self.state_info['crouching'] = True
 
-        if keys[tools.keybinding['left']]:
+        if keys[self.keybinding['left']]:
             self.state_info['facing_right'] = False
             self.get_out_of_crouch()
             self.state = c.WALK
-        elif keys[tools.keybinding['right']]:
+        elif keys[self.keybinding['right']]:
             self.state_info['facing_right'] = True
             self.get_out_of_crouch()
             self.state = c.WALK
-        elif keys[tools.keybinding['jump']]:
+        elif keys[self.keybinding['jump']]:
             if self.state_info['allow_jump']:
                 if self.state_info['big']:
                     self.SFX['big_jump'].play()
@@ -499,7 +523,7 @@ class Mario(pg.sprite.Sprite):
         else:
             self.state = c.STAND
 
-        if not keys[tools.keybinding['down']]:
+        if not keys[self.keybinding['down']]:
             self.get_out_of_crouch()
 
     def get_out_of_crouch(self):
@@ -517,12 +541,12 @@ class Mario(pg.sprite.Sprite):
 
     def check_to_allow_jump(self, keys):
         """Check to allow Mario to jump"""
-        if not keys[tools.keybinding['jump']]:
+        if not keys[self.keybinding['jump']]:
             self.state_info['allow_jump'] = True
 
     def check_to_allow_fireball(self, keys):
         """Check to allow the shooting of a fireball"""
-        if not keys[tools.keybinding['action']]:
+        if not keys[self.keybinding['action']]:
             self.state_info['allow_fireball'] = True
 
     def shoot_fireball(self):
@@ -560,7 +584,7 @@ class Mario(pg.sprite.Sprite):
 
                 self.timers['walking'] = pg.time.get_ticks()
 
-        if keys[tools.keybinding['action']]:
+        if keys[self.keybinding['action']]:
             self.max_x_vel = c.MAX_RUN_SPEED
             self.x_accel = c.RUN_ACCEL
             if self.state_info['fire'] and self.state_info['allow_fireball']:
@@ -569,7 +593,7 @@ class Mario(pg.sprite.Sprite):
             self.max_x_vel = c.MAX_WALK_SPEED
             self.x_accel = c.WALK_ACCEL
 
-        if keys[tools.keybinding['jump']]:
+        if keys[self.keybinding['jump']]:
             if self.state_info['allow_jump']:
                 if self.state_info['big']:
                     self.SFX['big_jump'].play()
@@ -582,7 +606,7 @@ class Mario(pg.sprite.Sprite):
                     self.y_vel = c.JUMP_VEL
                 self.rect.y -= 1
 
-        if keys[tools.keybinding['left']]:
+        if keys[self.keybinding['left']]:
             self.get_out_of_crouch()
             self.state_info['facing_right'] = False
             if self.x_vel > 0:
@@ -598,7 +622,7 @@ class Mario(pg.sprite.Sprite):
             elif self.x_vel < (self.max_x_vel * -1):
                 self.x_vel += self.x_accel
 
-        elif keys[tools.keybinding['right']]:
+        elif keys[self.keybinding['right']]:
             self.get_out_of_crouch()
             self.state_info['facing_right'] = True
             if self.x_vel < 0:
@@ -650,15 +674,15 @@ class Mario(pg.sprite.Sprite):
         self.frame_index = 4
         self.check_to_allow_fireball(keys)
 
-        if keys[tools.keybinding['left']]:
+        if keys[self.keybinding['left']]:
             if self.x_vel > (self.max_x_vel * - 1):
                 self.x_vel -= self.x_accel
 
-        elif keys[tools.keybinding['right']]:
+        elif keys[self.keybinding['right']]:
             if self.x_vel < self.max_x_vel:
                 self.x_vel += self.x_accel
 
-        if keys[tools.keybinding['action']]:
+        if keys[self.keybinding['action']]:
             if self.state_info['fire'] and self.state_info['allow_fireball']:
                 self.shoot_fireball()
 
@@ -679,6 +703,7 @@ class Mario(pg.sprite.Sprite):
         self.x_vel = 0
         self.gravity = .5
         self.frame_index = 6
+        self.right_frames = self.right_small_normal_frames
         self.image = self.right_frames[self.frame_index]
         self.state = c.DEATH_JUMP
         self.state_info['in_transition'] = True
@@ -774,21 +799,15 @@ class Mario(pg.sprite.Sprite):
 
     def changing_to_fire(self):
         """Called when Mario is in a BIG_TO_FIRE state (i.e. when
-        he obtains a fire flower"""
+        he obtains a fire flower)"""
         self.state_info['in_transition'] = True
 
         if self.state_info['facing_right']:
             frames = [self.right_big_normal_frames[0],
-                      self.fire_frames[0]]
-            # frames = [self.right_fire_frames[3],
-            #           self.right_big_red_frames[3],
-            #           self.right_big_black_frames[3]]
+                      self.fire_frames[0][0]]
         else:
             frames = [self.left_big_normal_frames[0],
-                      self.left_fire_frames[0]]
-            # frames = [self.left_fire_frames[3],
-            #           self.left_big_red_frames[3],
-            #           self.left_big_black_frames[3]]
+                      self.fire_frames[0][1]]
 
         if self.timers['fire_transition'] == 0:
             self.timers['fire_transition'] = pg.time.get_ticks()
@@ -924,6 +943,12 @@ class Mario(pg.sprite.Sprite):
         self.state_info['in_transition'] = True
         self.x_vel = 0
         self.y_vel = 0
+        if self.state_info['big'] and not self.state_info['fire']:
+            self.right_frames = self.right_fire_frames
+        elif self.state_info['big']:
+            self.right_frames = self.right_big_normal_frames
+        else:
+            self.right_frames = self.right_small_normal_frames
 
         if self.timers['flag_pole'] == 0:
             self.timers['flag_pole'] = pg.time.get_ticks()
@@ -1097,13 +1122,15 @@ class Mario(pg.sprite.Sprite):
     def check_wall(self):
         """Check if Mario is attempting to walk through a wall"""
         for obj in self.game_objects['collide_objs']:
-            pts = [obj.rect.midleft, obj.rect.bottomleft, obj.rect.midright, obj.rect.bottomright]
+            pts = [obj.rect.midleft, obj.rect.midright]
             for pt in pts:
                 if self.rect.collidepoint(pt):
+                    print('collide obj')
+                    print(obj.rect.x, obj.rect.y)
                     if obj.rect.right > self.rect.right:
-                        self.rect.x -= int(obj.rect.width * 0.25)
+                        self.rect.right = obj.rect.left
                     else:
-                        self.rect.x += int(obj.rect.width * 0.25)
+                        self.rect.left = obj.rect.right + 1
                     return True
         return False
 
@@ -1142,34 +1169,33 @@ class Mario(pg.sprite.Sprite):
                 break
         power_up = pg.sprite.spritecollideany(self, self.game_objects['items'])
 
-        if goomba and goomba not in self.sprites_about_to_die_group:
-            if self.state_info['invincible']:
-                self.SFX['kick'].play()
-                self.sprites_about_to_die_group.add(goomba)
-            elif self.state_info['big']:
-                self.SFX['pipe'].play()
-                self.state_info['fire'] = False
-                self.y_vel = -1
-                self.state = c.BIG_TO_SMALL
-            elif self.state_info['hurt_invincible']:
-                pass
-            else:
-                self.start_death_jump()
-
-        elif koopa:
-            pass
-            # self.adjust_mario_for_x_shell_collisions(koopa)
-
-        elif power_up:
+        if (goomba and not goomba.player_enemy_kill) or (koopa and not koopa.player_enemy_kill):
+            target = goomba or koopa
+            if target not in self.sprites_about_to_die_group:
+                if self.state_info['invincible']:
+                    self.SFX['kick'].play()
+                    self.sprites_about_to_die_group.add(target)
+                    target.player_enemy_kill = True
+                elif self.state_info['big']:
+                    self.SFX['shrink'].play()
+                    self.state_info['fire'] = False
+                    self.y_vel = -1
+                    self.state = c.BIG_TO_SMALL
+                elif self.state_info['hurt_invincible']:
+                    pass
+                else:
+                    self.start_death_jump()
+        elif power_up and not power_up.item_type == Item.ONE_UP:
             if power_up.item_type == Item.STARMAN:
                 self.state_info['invincible'] = True
+                pg.mixer.music.load('audio/Star-Theme.ogg')
+                pg.mixer.music.play()
                 self.timers['invincible_start'] = pg.time.get_ticks()
             elif power_up.item_type == Item.MUSHROOM:
                 self.SFX['powerup'].play()
                 self.y_vel = -1
                 self.state = c.SMALL_TO_BIG
                 self.state_info['in_transition'] = True
-
             elif power_up.item_type == Item.FIRE_FLOWER:
                 self.SFX['powerup'].play()
                 if self.state_info['big'] and not self.state_info['fire']:
@@ -1189,40 +1215,8 @@ class Mario(pg.sprite.Sprite):
 
         self.x_vel = 0
 
-    # def adjust_mario_for_x_shell_collisions(self, koopa):
-    #     """Deals with Mario if he hits a shell moving on the x axis"""
-    #
-    #     shell = koopa
-    #     if shell.state == c.JUMPED_ON:
-    #         if self.rect.x < shell.rect.x:
-    #             self.rect.right = shell.rect.left
-    #             shell.direction = c.RIGHT
-    #             shell.x_vel = 5
-    #             shell.rect.x += 5
-    #
-    #         else:
-    #             self.rect.left = shell.rect.right
-    #             shell.direction = c.LEFT
-    #             shell.x_vel = -5
-    #             shell.rect.x += -5
-    #
-    #         shell.state = c.SHELL_SLIDE
-    #
-    #     elif shell.state == c.SHELL_SLIDE:
-    #         if self.state_info['big'] and not self.state_info['invincible']:
-    #             self.state = c.BIG_TO_SMALL
-    #         elif self.state_info['invincible']:
-    #             shell.kill()
-    #             self.sprites_about_to_die_group.add(shell)
-    #             shell.start_death_jump(c.RIGHT)
-    #         else:
-    #             if not self.state_info['hurt_invincible'] and not self.state_info['invincible']:
-    #                 self.start_death_jump()
-
     def check_mario_y_collisions(self):
         """Checks for collisions when Mario moves along the y-axis"""
-        # ground_step_pipe = pg.sprite.Group(self.collide_objs, self.pipes)
-        # ground_step_or_pipe = pg.sprite.spritecollideany(self, self.pipes)
         enemy = None
         for g in self.game_objects['goomba']:
             if self.rect.collidepoint(g.rect.midtop):
@@ -1233,67 +1227,10 @@ class Mario(pg.sprite.Sprite):
                 if self.rect.collidepoint(k.rect.midtop):
                     enemy = k
                     break
-        shell = pg.sprite.spritecollideany(self, self.game_objects['koopa'])
-        # brick = pg.sprite.spritecollideany(self, self.blocks)
-        # coin_box = pg.sprite.spritecollideany(self, self.coins)
-        power_up = pg.sprite.spritecollideany(self, self.game_objects['items'])
-
-        if enemy:
+        if enemy and not enemy.player_enemy_kill:
             print('enemy')
-            if self.state_info['invincible']:
-                self.SFX['kick'].play()
-                # enemy.kill()
-                self.sprites_about_to_die_group.add(enemy)
-            else:
-                self.adjust_mario_for_y_enemy_collisions(enemy)
-
-        elif shell:
-            print('shell')
-            self.adjust_mario_for_y_shell_collisions(shell)
-
-        elif power_up:
-            print('power_up')
-            if power_up.item_type == Item.STARMAN:
-                self.SFX['powerup'].play()
-                power_up.kill()
-                self.state_info['invincible'] = True
-                self.timers['invincible_start'] = pg.time.get_ticks()
-
-    def adjust_mario_for_y_coin_box_collisions(self, coin_box):
-        """Mario collisions with coin boxes on the y-axis"""
-        if self.rect.y > coin_box.rect.y:
-            if coin_box.state == c.OPENED:
-                pass
-            self.SFX['bump'].play()
-            self.y_vel = 7
-            self.rect.y = coin_box.rect.bottom
-            self.state = c.FALL
-        else:
-            self.y_vel = 0
-            self.rect.bottom = coin_box.rect.top
-            self.state = c.WALK
-
-    def adjust_mario_for_y_brick_collisions(self, brick):
-        """Mario collisions with bricks on the y-axis"""
-        if self.rect.y > brick.rect.y:
-            if brick.state == c.RESTING:
-                if self.state_info['big'] and brick.contents is None:
-                    self.SFX['brick_smash'].play()
-                    self.check_if_enemy_on_brick(brick)
-                    brick.kill()
-                else:
-                    self.SFX['bump'].play()
-                    self.check_if_enemy_on_brick(brick)
-            elif brick.state == c.OPENED:
-                self.SFX['bump'].play()
-            self.y_vel = 7
-            self.rect.y = brick.rect.bottom
-            self.state = c.FALL
-
-        else:
-            self.y_vel = 0
-            self.rect.bottom = brick.rect.top
-            self.state = c.WALK
+            enemy.set_killed()
+            self.adjust_mario_for_y_enemy_collisions(enemy)
 
     def check_if_enemy_on_brick(self, brick):
         """Kills enemy if on a bumped or broken brick"""
@@ -1328,29 +1265,7 @@ class Mario(pg.sprite.Sprite):
 
     def adjust_mario_for_y_enemy_collisions(self, enemy):
         """Mario collisions with all enemies on the y-axis"""
-        if self.y_vel > 0:
-            self.SFX['stomp'].play()
-            # enemy.kill()
-            if enemy.__class__.__name__ == 'Goomba':
-                enemy.death_timer = pg.time.get_ticks()
-                self.sprites_about_to_die_group.add(enemy)
-            elif enemy.__class__.__name__ == 'Koopa':
-                self.shell.add(enemy)
-            self.rect.bottom = enemy.rect.top
-            self.state = c.JUMP
-            self.y_vel = -7
-
-    def adjust_mario_for_y_shell_collisions(self, shell):
-        """Mario collisions with Koopas in their shells on the y axis"""
-        if self.y_vel > 0:
-            if shell.state == c.JUMPED_ON:
-                self.SFX['kick'].play()
-                shell.state = c.SHELL_SLIDE
-                if self.rect.centerx < shell.rect.centerx:
-                    shell.direction = c.RIGHT
-                    shell.rect.left = self.rect.right + 5
-                else:
-                    shell.direction = c.LEFT
-                    shell.rect.right = self.rect.left - 5
-            else:
-                shell.state = c.JUMPED_ON
+        self.SFX['stomp'].play()
+        self.rect.bottom = enemy.rect.top - 1
+        self.state = c.JUMP
+        self.y_vel = -7
