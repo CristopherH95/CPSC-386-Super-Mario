@@ -194,19 +194,21 @@ class Game:
         """Prepare the enemy sprites"""
         # may not be necessary if passing game_objects dictionary as a whole
         #  to Mario instead of passing individual groups
-        enemy_spawn_data = self.retrieve_map_data('enemy-spawns')
+        enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
         for spawn in enemy_spawn_data:
             if spawn.properties.get('e_type', 'goomba') == 'goomba':
                 enemy = Goomba(self.screen, spawn.x, spawn.y, self.mario,
                                self.game_objects['floors'], self.game_objects['collide_objs'],
                                self.game_objects['goomba'], self.game_objects['koopa'])
+                enemy.rect.y += 65 - enemy.rect.height
+                self.game_objects['goomba'].add(enemy)
             else:
                 enemy = Koopa(self.screen, spawn.x, spawn.y, self.mario,
                               self.game_objects['floors'], self.game_objects['collide_objs'],
                               self.game_objects['goomba'], self.game_objects['koopa'])
-            self.game_objects['goomba'].add(enemy)
+                enemy.rect.y += (65 - enemy.rect.height)
+                self.game_objects['koopa'].add(enemy)
             self.map_group.add(enemy)
-            enemy.rect.y += 24
 
     def set_paused(self, event):
         """Set the game state to paused based on key press"""
@@ -251,6 +253,8 @@ class Game:
             self.game_objects['coins'].update()
             for goomba in self.game_objects['goomba']:
                 goomba.update()
+            for koopa in self.game_objects['koopa']:
+                koopa.update()
         self.map_group.draw(self.screen)
         if not self.game_active:
             self.menu.blit()
