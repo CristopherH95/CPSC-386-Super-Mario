@@ -5,7 +5,7 @@ class Pipe(Block):
     """Represents a pipe which may potentially lead to another map"""
     def __init__(self, x, y, image, screen, destination=None, spawn='player', horiz=False, music='BG-Main.wav'):
         super(Pipe, self).__init__(x, y, image, screen)
-        self.destination = str(destination)  # TODO: destination handling
+        self.destination = str(destination) if destination else None
         self.spawn = spawn
         self.horiz = horiz
         self.music = music
