@@ -54,7 +54,6 @@ class Enemy(Sprite):
             for point in range(x, limitx):
                 pts.append((x, y))
             for pt in pts:
-                print('Here')
                 if self.rect.collidepoint(pt) and self.rect.left < self.player.rect.centerx < self.rect.right:
                     self.set_killed()
             self.enemy_player_collide_flag = True
@@ -226,7 +225,7 @@ class Goomba(Enemy):
                 else:
                     self.enemy_player_collide_flag = False
             # Collision with map or block
-            if self.enemy_block_collide_flag:
+            elif self.enemy_block_collide_flag:
                 # Killed by player hitting block
                 if self.block_enemy_kill:
                     self.dead = True
@@ -254,40 +253,53 @@ class Goomba(Enemy):
 class Koopa(Enemy):
     def __init__(self, screen, x, y, player, floor, block, goombas, koopas):
         self.name_1, self.name_2 = None, None
-        self.name_1 = self.img_file('KoopaWalkLeft_1')
-        self.name_2 = self.img_file('KoopaWalkLeft_2')
+        self.name_1 = self.img_file('KoopaWalkLeft_1', 25, 40)
+        self.name_2 = self.img_file('KoopaWalkLeft_2', 25, 40)
         self.left_images = [self.name_1,
                             self.name_2]
-        self.name_1 = self.img_file('KoopaWalkRight_1')
-        self.name_2 = self.img_file('KoopaWalkRight_2')
+        self.name_1 = self.img_file('KoopaWalkRight_1', 25, 40)
+        self.name_2 = self.img_file('KoopaWalkRight_2', 25, 40)
         self.right_images = [self.name_1,
                              self.name_2]
-        self.name_1 = self.img_file('KoopaShell')
+        self.name_1 = self.img_file('KoopaShell', 35, 30)
         self.death_images = [self.name_1]
-        self.name_1 = self.img_file('KoopaShellUD')
+        self.name_1 = self.img_file('KoopaShellUD', 35, 30)
         self.UD_death_images = [self.name_1]
-        self.name_1 = self.img_file('KoopaLegs')
+        self.name_1 = self.img_file('KoopaLegs', 35, 30)
         self.feet_images = [self.name_1]
         self.animator = Animator(self.left_images)
         image = self.animator.get_image()
         super().__init__(screen, image, x, y, player, floor, block, goombas, koopas)
-
-        # print(str(self.rect.y))
         self.collision_flag = False
         self.feet_frame = 0
         self.counter = 0
 
-    def img_file(self, name):
+    def img_file(self, name, length, width):
         file = 'images/enemies/koopa/' + name + '.png'
         file = pygame.image.load(file)
-        file = pygame.transform.scale(file, (25, 40))
+        file = pygame.transform.scale(file, (length, width))
         return file
 
+    def upside_down_death_animation(self):
+        time = pygame.time.get_ticks()
+        # Animate getting hit (Go up for two seconds)
+        if self.death_animation_frame == 0:
+            self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_SPEED)
+        else:
+            self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_SPEED * -1)
+        # After two seconds fall down while upside down
+        if self.death_animation_frame == 0 and abs(self.last_frame - time) > 2000:
+            self.animator = Animator(self.UD_death_images)
+            self.death_animation_frame += 1
+        """MIGHT BE REDUNDANT WITH CHECK BOUNDARY"""
+        # Kill off after 10 seconds (Enough to be off screen)
+        if abs(self.last_frame - time) > 10000:
+            self.player.score += 100
+            self.kill()
+
     def update(self):
-        if not self.dead:
-            self.koopa_physics()
+        self.koopa_physics()
         self.image = self.animator.get_image()
-        pygame.transform.scale(self.image, (25, 40))
 
     def check_player_shell_collision(self):
         # Check player collision when in shell
@@ -306,10 +318,6 @@ class Koopa(Enemy):
 
         # If collision
         if self.check_collisions():
-            # Collides with player when not in shell -> Player Dies
-            if self.enemy_player_collide_flag and not self.shell_mode:
-                self.stop = True
-                self.rect.x += 0
             # Gets stomped on -> stop
             # Collides with player when in shell -> Movement
             if self.enemy_player_collide_flag and self.shell_mode:
@@ -317,21 +325,31 @@ class Koopa(Enemy):
                 # Only put in shell if needed
                 if self.death_animation_frame == 0:
                     self.animator = Animator(self.death_images)
+                    self.image = self.animator.get_image()
+                    tempx, tempy = self.rect.x, self.rect.y
+                    self.rect = self.image.get_rect()
+                    self.rect.x = tempx
+                    self.rect.y = tempy
                     self.death_animation_frame += 1
                 # Collide with player in shell mode causes movement
                 if self.check_player_shell_collision():
                     self.shell_movement = True
                 # Move shell depending on which side was hit
                 if self.shell_movement:
-                    # Left side was hit
-                    if self.rect.x >= self.player.rect.x:
-                        self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION)
-                    # Right side hit
-                    else:
-                        self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
+                    if self.death_animation_frame == 1:
+                        # Left side was hit
+                        if self.rect.x >= self.player.rect.x:
+                            self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION)
+                        # Right side hit
+                        else:
+                            self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
+                        self.death_animation_frame += 1
+                    if self.check_block_collision():
+                        pass
                     self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
                 # Not being hit by player again makes koopa pop out of shell
-                if not self.check_player_shell_collision() and abs(self.last_frame - time) > 8000:
+                if not self.check_player_shell_collision() and abs(self.last_frame - time) > 8000 and not\
+                        self.shell_movement:
                     if self.counter == 0:
                         self.animator = Animator(self.feet_images)
                         self.feet_frame = pygame.time.get_ticks()
@@ -346,20 +364,8 @@ class Koopa(Enemy):
             elif self.enemy_block_collide_flag:
                 # Killed by player hitting block
                 if self.block_enemy_kill:
-                    time = pygame.time.get_ticks()
-                    self.stop = True
-                    # Animate getting hit by block (Go up for two seconds)
-                    self.rect.y += (abs(self.ENEMY_DIRECTION) * self.ENEMY_SPEED)
-                    # After two seconds fall down while upside down
-                    if self.death_animation_frame == 0 and abs(self.last_frame - time) > 2000:
-                        self.animator = Animator(self.UD_death_images)
-                        self.death_animation_frame += 1
-                        self.ENEMY_DIRECTION *= -1
-                    """MIGHT BE REDUNDANT WITH CHECK BOUNDARY"""
-                    # Kill off after 10 seconds (Enough to be off screen)
-                    if abs(self.last_frame - time) > 10000:
-                        self.death_animation_frame = 0
-                        self.kill()
+                    self.dead = True
+                    self.upside_down_death_animation()
                 # If colliding with map (i.e. Pipe) change direction
                 else:
                     self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
@@ -368,23 +374,12 @@ class Koopa(Enemy):
             elif self.enemy_goomba_collide_flag:
                 self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
                 self.enemy_goomba_collide_flag = False
-            # If colliding with koopa
             elif self.enemy_koopa_collide_flag:
-                """NOT NEEDED ONLY ONE KOOPA ON MAP"""
-                # Colliding with koopa shell
+                # Colliding with koopa shell thats moving
                 if self.shell_enemy_kill:
-                    # Change to upside down images and fall down
-                    time = pygame.time.get_ticks()
-                    if self.death_animation_frame == 0:
-                        self.animator = Animator(self.UD_death_images)
-                        self.death_animation_frame += 1
-                    self.rect.y += abs(self.ENEMY_DIRECTION * self.ENEMY_SPEED)
-                    # Kill off after 10 seconds (Enough to be off screen)
-                    """MIGHT BE REDUNDANT ^ CHECKS AT TOP"""
-                    if abs(self.last_frame - time) > 10000:
-                        self.death_animation_frame = 0
-                        self.kill()
-                # Colliding with koopa enemy
+                    self.dead = True
+                    self.upside_down_death_animation()
+                # Colliding with koopa enemy or shell
                 else:
                     self.rect.x += (self.ENEMY_DIRECTION * self.ENEMY_SPEED)
                     self.enemy_koopa_collide_flag = False

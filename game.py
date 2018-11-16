@@ -207,6 +207,7 @@ class Game:
                               self.game_objects['floors'], self.game_objects['collide_objs'],
                               self.game_objects['goomba'], self.game_objects['koopa'])
                 enemy.rect.y += (65 - enemy.rect.height)
+                print('Enemy rect begin:'  + str(enemy.rect.y))
                 self.game_objects['koopa'].add(enemy)
             self.map_group.add(enemy)
 
