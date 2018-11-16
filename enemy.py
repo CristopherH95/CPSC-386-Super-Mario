@@ -229,6 +229,7 @@ class Goomba(Enemy):
                 # Killed by player hitting block
                 if self.block_enemy_kill:
                     self.dead = True
+                    self.last_frame = pygame.time.get_ticks()
                     self.upside_down_death_animation()
                 # If colliding with map (i.e. Pipe) change direction
                 else:
@@ -243,6 +244,7 @@ class Goomba(Enemy):
                 # Colliding with koopa shell thats moving
                 if self.shell_enemy_kill:
                     self.dead = True
+                    self.last_frame = pygame.time.get_ticks()
                     self.upside_down_death_animation()
                 # Colliding with koopa enemy or shell
                 else:
@@ -328,7 +330,7 @@ class Koopa(Enemy):
                     self.image = self.animator.get_image()
                     tempx, tempy = self.rect.x, self.rect.y
                     self.rect = self.image.get_rect()
-                    self.rect.x = tempx
+                    self.rect.x = tempx + 60
                     self.rect.y = tempy
                     self.death_animation_frame += 1
                 # Collide with player in shell mode causes movement
