@@ -170,7 +170,7 @@ class Game:
         """Prepare the enemy sprites"""
         # may not be necessary if passing game_objects dictionary as a whole
         #  to Mario instead of passing individual groups
-        enemy_spawn_data = self.tmx_data.get_layer_by_name('enemy-spawns')
+        enemy_spawn_data = self.retrieve_map_data('enemy-spawns')
         for spawn in enemy_spawn_data:
             if spawn.properties.get('e_type', 'goomba') == 'goomba':
                 enemy = Goomba(self.screen, spawn.x, spawn.y, self.mario,
