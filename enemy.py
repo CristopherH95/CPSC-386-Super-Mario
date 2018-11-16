@@ -44,6 +44,13 @@ class Enemy(Sprite):
         self.dead = False
         self.stop = False
 
+    @staticmethod
+    def img_file(name, length, width):
+        file = 'images/enemies/koopa/' + name + '.png'
+        file = pygame.image.load(file)
+        file = pygame.transform.scale(file, (length, width))
+        return file
+
     def check_player_collision(self):
         """Checks collisions with Mario"""
         if self.rect.colliderect(self.player.rect):
@@ -253,19 +260,19 @@ class Goomba(Enemy):
 class Koopa(Enemy):
     def __init__(self, screen, x, y, player, floor, block, goombas, koopas):
         self.name_1, self.name_2 = None, None
-        self.name_1 = self.img_file('KoopaWalkLeft_1', 25, 40)
-        self.name_2 = self.img_file('KoopaWalkLeft_2', 25, 40)
+        self.name_1 = Enemy.img_file('KoopaWalkLeft_1', 25, 40)
+        self.name_2 = Enemy.img_file('KoopaWalkLeft_2', 25, 40)
         self.left_images = [self.name_1,
                             self.name_2]
-        self.name_1 = self.img_file('KoopaWalkRight_1', 25, 40)
-        self.name_2 = self.img_file('KoopaWalkRight_2', 25, 40)
+        self.name_1 = Enemy.img_file('KoopaWalkRight_1', 25, 40)
+        self.name_2 = Enemy.img_file('KoopaWalkRight_2', 25, 40)
         self.right_images = [self.name_1,
                              self.name_2]
-        self.name_1 = self.img_file('KoopaShell', 35, 30)
+        self.name_1 = Enemy.img_file('KoopaShell', 35, 30)
         self.death_images = [self.name_1]
-        self.name_1 = self.img_file('KoopaShellUD', 35, 30)
+        self.name_1 = Enemy.img_file('KoopaShellUD', 35, 30)
         self.UD_death_images = [self.name_1]
-        self.name_1 = self.img_file('KoopaLegs', 35, 30)
+        self.name_1 = Enemy.img_file('KoopaLegs', 35, 30)
         self.feet_images = [self.name_1]
         self.animator = Animator(self.left_images)
         image = self.animator.get_image()
@@ -273,12 +280,6 @@ class Koopa(Enemy):
         self.collision_flag = False
         self.feet_frame = 0
         self.counter = 0
-
-    def img_file(self, name, length, width):
-        file = 'images/enemies/koopa/' + name + '.png'
-        file = pygame.image.load(file)
-        file = pygame.transform.scale(file, (length, width))
-        return file
 
     def upside_down_death_animation(self):
         time = pygame.time.get_ticks()

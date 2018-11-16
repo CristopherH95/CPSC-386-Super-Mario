@@ -943,6 +943,12 @@ class Mario(pg.sprite.Sprite):
         self.state_info['in_transition'] = True
         self.x_vel = 0
         self.y_vel = 0
+        if self.state_info['big'] and not self.state_info['fire']:
+            self.right_frames = self.right_fire_frames
+        elif self.state_info['big']:
+            self.right_frames = self.right_big_normal_frames
+        else:
+            self.right_frames = self.right_small_normal_frames
 
         if self.timers['flag_pole'] == 0:
             self.timers['flag_pole'] = pg.time.get_ticks()

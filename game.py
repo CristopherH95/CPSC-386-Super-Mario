@@ -13,30 +13,6 @@ from game_stats import GameStats
 import pygame
 
 
-# test sprite
-class TestSprite(pygame.sprite.Sprite):
-    def __init__(self, pos, image=None):
-        super(TestSprite, self).__init__()
-        if not image:
-            self.image = pygame.Surface((25, 25))
-            self.image.fill((255, 255, 255))
-        else:
-            self.image = image
-        self.rect = self.image.get_rect()
-        self.rect.left, self.rect.top = pos[0], pos[1]
-
-    def update(self, walls):
-        print(str(self.rect.x))
-        self.rect.x += 3
-        touched_wall = False
-        for wall in walls:
-            if self.rect.colliderect(wall):
-                touched_wall = True
-                break
-        if not touched_wall:
-            self.rect.bottom += 1   # test the sprite dropping to the floor
-
-
 class Game:
     """Represents the game and its related methods for running"""
     def __init__(self):
@@ -207,7 +183,7 @@ class Game:
                               self.game_objects['floors'], self.game_objects['collide_objs'],
                               self.game_objects['goomba'], self.game_objects['koopa'])
                 enemy.rect.y += (65 - enemy.rect.height)
-                print('Enemy rect begin:'  + str(enemy.rect.y))
+                print('Enemy rect begin:' + str(enemy.rect.y))
                 self.game_objects['koopa'].add(enemy)
             self.map_group.add(enemy)
 
