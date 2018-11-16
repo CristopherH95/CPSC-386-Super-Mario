@@ -47,8 +47,14 @@ class Enemy(Sprite):
     def check_player_collision(self):
         """Checks collisions with Mario"""
         if self.rect.colliderect(self.player.rect):
-            pts = [self.rect.topleft, self.rect.midtop, self.rect.topright]
+            # pts = [self.rect.topleft, self.rect.midtop, self.rect.topright]
+            pts = []
+            x, y = self.rect.topleft
+            limitx, limity = self.rect.topright
+            for point in range(x, limitx):
+                pts.append((x, y))
             for pt in pts:
+                print('Here')
                 if self.rect.collidepoint(pt) and self.rect.left < self.player.rect.centerx < self.rect.right:
                     self.set_killed()
             self.enemy_player_collide_flag = True
@@ -56,10 +62,10 @@ class Enemy(Sprite):
 
     def set_killed(self):
         """Set the enemy's status to killed by the player"""
-        self.player.score += 100
         self.player_enemy_kill = True
         self.last_frame = pygame.time.get_ticks()
         self.shell_mode = True
+        self.dead = True
 
     def check_block_collision(self):
         # Check if colliding with map (i.e pipe) or dying from block
@@ -73,13 +79,14 @@ class Enemy(Sprite):
                 self.ENEMY_DIRECTION = abs(self.ENEMY_DIRECTION) * -1
                 self.enemy_block_collide_flag = True
                 self.block_enemy_kill = True
+                self.dead = True
                 return True
 
     def check_friendly_collision(self):
         """FIX ENEMY COLLIDING WITH SELF"""
         # Check for collisions with friendly or koopa shell
         for goomba_rect in self.goombas:
-            if goomba_rect is not self and self.rect.colliderect(goomba_rect.rect):
+            if goomba_rect is not self and self.rect.colliderect(goomba_rect.rect) and not goomba_rect.dead:
                 self.enemy_goomba_collide_flag = True
                 self.ENEMY_DIRECTION *= -1
                 return True
@@ -163,6 +170,7 @@ class Goomba(Enemy):
         # Animate and keep on screen for half a second before killing sprite
         self.animator = Animator(self.crushed_images)
         if abs(time - self.last_frame) > 1000:
+            self.player.score += 100
             self.kill()
 
     def upside_down_death_animation(self):
@@ -179,6 +187,7 @@ class Goomba(Enemy):
         """MIGHT BE REDUNDANT WITH CHECK BOUNDARY"""
         # Kill off after 10 seconds (Enough to be off screen)
         if abs(self.last_frame - time) > 10000:
+            self.player.score += 100
             self.kill()
 
     def update(self):
