@@ -1171,20 +1171,21 @@ class Mario(pg.sprite.Sprite):
 
         if (goomba and not goomba.player_enemy_kill) or (koopa and not koopa.player_enemy_kill):
             target = goomba or koopa
-            if self.state_info['invincible']:
-                self.SFX['kick'].play()
-                self.sprites_about_to_die_group.add(target)
-                target.player_enemy_kill = True
-            elif self.state_info['big']:
-                self.SFX['shrink'].play()
-                self.state_info['fire'] = False
-                self.y_vel = -1
-                self.state = c.BIG_TO_SMALL
-            elif self.state_info['hurt_invincible']:
-                pass
-            else:
-                self.start_death_jump()
-        elif power_up:
+            if target not in self.sprites_about_to_die_group:
+                if self.state_info['invincible']:
+                    self.SFX['kick'].play()
+                    self.sprites_about_to_die_group.add(target)
+                    target.player_enemy_kill = True
+                elif self.state_info['big']:
+                    self.SFX['shrink'].play()
+                    self.state_info['fire'] = False
+                    self.y_vel = -1
+                    self.state = c.BIG_TO_SMALL
+                elif self.state_info['hurt_invincible']:
+                    pass
+                else:
+                    self.start_death_jump()
+        elif power_up and not power_up.item_type == Item.ONE_UP:
             if power_up.item_type == Item.STARMAN:
                 self.state_info['invincible'] = True
                 pg.mixer.music.load('audio/Star-Theme.ogg')
